@@ -407,57 +407,72 @@ SignIn
     btn.innerHTML = "Loading . . .";
   }
 
-  async function loginUser({ email, password }) {
-    await $.ajax({
-      type: "POST",
-      url: "https://scottlsh-render.onrender.com/auth/login",
-      dataType: "json",
-      // credentials: 'include' equivalent in jQuery — sends/receives cookies
-      xhrFields: { withCredentials: true },
-      data: { email, password },
-      timeout: 30000,
-      success: function ({ data }) {
-        // ✅ CHANGED: Do NOT store token in localStorage (XSS risk).
-        // The httpOnly cookie is set by the server automatically.
-        // Only store non-sensitive user info in localStorage.
-        localStorage.setItem("user", JSON.stringify({
-          firstName: data.firstName,
-          email: data.email,
-          role: data.role  // server tells us the role — no hardcoded email check
-        }));
+ async function loginUser({ email, password }) {
+  await $.ajax({
+    type: "POST",
+    url: "https://scottlsh-render.onrender.com/auth/login",
+    dataType: "json",
+    xhrFields: { withCredentials: true },
+    data: { email, password },
+    timeout: 30000,
 
-        Swal.fire({
-          icon: 'success',
-          text: 'Login successful!',
-          confirmButtonText: 'OK',
-          confirmButtonColor: '#3a64d1',
-          allowOutsideClick: true,
-          allowEscapeKey: true,
-        });
+    success: function (res) {
+      console.log("FULL RESPONSE:", res);
 
-        setTimeout(function () {
-          // ✅ CHANGED: Role comes from server, not a hardcoded email comparison
-          if (data.role === 'admin') {
-            $(location).prop('href', '../dashboard/admin/admindashboard.html');
-          } else {
-            $(location).prop('href', '../dashboard/dashboard.html');
-          }
-        }, 1000 * 2); // ✅ Reduced from 4s to 2s — no reason to wait that long
-      },
-      error: function (xhr, status, error) {
-        red();
-        console.log(error);
+      // ✅ CHECK if login actually succeeded
+      if (!res || res.success === false) {
         Swal.fire({
           icon: 'error',
-          text: 'Incorrect Username or Password!',
-          confirmButtonText: 'OK',
+          text: res?.message || 'Incorrect Username or Password!',
           confirmButtonColor: '#3a64d1',
-          allowOutsideClick: true,
-          allowEscapeKey: true,
         });
+        return;
       }
-    });
-  }
+
+      const data = res.data;
+
+      if (!data) {
+        Swal.fire({
+          icon: 'error',
+          text: 'Invalid server response',
+          confirmButtonColor: '#3a64d1',
+        });
+        return;
+      }
+
+      // ✅ Store safe user info only
+      localStorage.setItem("user", JSON.stringify({
+        firstName: data.firstName,
+        email: data.email,
+        role: data.role
+      }));
+
+      Swal.fire({
+        icon: 'success',
+        text: 'Login successful!',
+        confirmButtonColor: '#3a64d1',
+      });
+
+      setTimeout(function () {
+        if (data.role === 'admin') {
+          window.location.href = '../dashboard/admin/admindashboard.html';
+        } else {
+          window.location.href = '../dashboard/dashboard.html';
+        }
+      }, 2000);
+    },
+
+    error: function (xhr) {
+      console.log("ERROR RESPONSE:", xhr.responseText);
+
+      Swal.fire({
+        icon: 'error',
+        text: 'Server error. Try again.',
+        confirmButtonColor: '#3a64d1',
+      });
+    }
+  });
+}
 
   $('#btn').click(function (e) {
     e.preventDefault();

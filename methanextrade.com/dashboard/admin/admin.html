@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Admin Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;--bg2:#f6f6f4;--bg3:#eeede9;
+  --tx:#111111;--tx2:#666666;--tx3:#999999;
+  --border:#e2e2de;--border2:#c9c9c4;
+  --success-bg:#edf7ed;--success:#1a6b1a;
+  --warn-bg:#fef8e7;--warn:#7a5600;
+  --danger-bg:#fdeaea;--danger:#9b1c1c;
+  --info-bg:#e8f2fb;--info:#174d87;
+  --r:8px;--rl:12px;
+  --font:'Segoe UI',system-ui,sans-serif;--mono:'Courier New',monospace;
+}
+body{font-family:var(--font);background:var(--bg3);color:var(--tx);font-size:14px;line-height:1.5}
+.shell{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+
+/* ── SIDEBAR ── */
+.sidebar{background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:1.25rem 1.25rem 1rem;border-bottom:1px solid var(--border)}
+.logo-mark{font-size:16px;font-weight:700;letter-spacing:-.5px}
+.logo-sub{font-size:11px;color:var(--tx3);margin-top:2px}
+nav{flex:1;padding:.5rem 0}
+.ns{font-size:10px;color:var(--tx3);padding:.75rem 1.25rem .25rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+.ni{display:flex;align-items:center;gap:9px;padding:.48rem 1.25rem;font-size:13px;color:var(--tx2);cursor:pointer;border-left:2.5px solid transparent;transition:all .12s;user-select:none}
+.ni:hover{color:var(--tx);background:var(--bg2)}
+.ni.active{color:var(--tx);border-left-color:var(--tx);background:var(--bg2);font-weight:600}
+.ni svg{width:15px;height:15px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.6}
+.badge-count{margin-left:auto;font-size:10px;font-weight:700;background:var(--danger-bg);color:var(--danger);padding:1px 6px;border-radius:99px}
+.sf{padding:1rem 1.25rem;border-top:1px solid var(--border);font-size:11px;color:var(--tx3)}
+
+/* ── MAIN ── */
+.main{padding:1.75rem;overflow:auto}
+.page{display:none}.page.active{display:block}
+.ph{margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:flex-end}
+.pt{font-size:19px;font-weight:700;letter-spacing:-.4px}
+.ps{font-size:12px;color:var(--tx2);margin-top:3px}
+
+/* ── METRIC CARDS ── */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.5rem}
+.mc{background:var(--bg2);border-radius:var(--r);padding:.9rem 1rem;border:1px solid var(--border)}
+.ml{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:5px}
+.mv{font-size:22px;font-weight:700;letter-spacing:-.5px}
+.mb{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px;margin-top:4px}
+
+/* ── CARD ── */
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--rl);padding:1.1rem 1.25rem;margin-bottom:1.1rem}
+.ch{display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem;gap:8px}
+.ct{font-size:13px;font-weight:700}
+.ch-right{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+
+/* ── BADGES ── */
+.bs{background:var(--success-bg);color:var(--success)}
+.bi{background:var(--info-bg);color:var(--info)}
+.bw{background:var(--warn-bg);color:var(--warn)}
+.bd{background:var(--danger-bg);color:var(--danger)}
+.bx{background:var(--bg2);color:var(--tx2)}
+
+/* ── BUTTONS ── */
+.btn{font-size:12px;padding:6px 13px;border-radius:var(--r);border:1px solid var(--border2);background:transparent;color:var(--tx);cursor:pointer;font-family:var(--font);font-weight:600;display:inline-flex;align-items:center;gap:5px;transition:all .12s;white-space:nowrap}
+.btn:hover{background:var(--bg2)}
+.btn-p{background:var(--tx);color:var(--bg);border-color:var(--tx)}.btn-p:hover{opacity:.82;background:var(--tx)}
+.btn-d{color:var(--danger);border-color:#e9b8b8}.btn-d:hover{background:var(--danger-bg)}
+.btn-s{color:var(--success);border-color:#b8ddb8}.btn-s:hover{background:var(--success-bg)}
+.btn-w{color:var(--warn);border-color:#e6d4a0}.btn-w:hover{background:var(--warn-bg)}
+.btn-sm{font-size:11px;padding:4px 10px}
+
+/* ── TABLE ── */
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;font-size:10px;color:var(--tx3);font-weight:700;padding:0 10px 8px 0;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.05em}
+td{padding:9px 10px 9px 0;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--bg2)}
+
+/* ── AVATAR ── */
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.av1{background:var(--info-bg);color:var(--info)}
+.av2{background:var(--success-bg);color:var(--success)}
+.av3{background:var(--warn-bg);color:var(--warn)}
+.av4{background:#f3eafd;color:#7c3aed}
+.uc{display:flex;align-items:center;gap:8px}
+
+/* ── FORMS ── */
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg.full{grid-column:1/-1}
+.fl{font-size:11px;color:var(--tx2);font-weight:700;display:block}
+input,select,textarea{font-family:var(--font);font-size:12.5px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--tx);width:100%;outline:none;transition:border-color .12s}
+input:focus,select:focus,textarea:focus{border-color:#888}
+textarea{resize:vertical;min-height:68px}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1rem}
+.tab{font-size:12px;padding:7px 15px;cursor:pointer;color:var(--tx2);border-bottom:2px solid transparent;margin-bottom:-1px;font-weight:600;transition:all .12s}
+.tab:hover{color:var(--tx)}
+.tab.active{color:var(--tx);border-bottom-color:var(--tx)}
+
+/* ── STATUS ── */
+.dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:5px}
+.dg{background:#22c55e}.da{background:#f59e0b}.dr{background:#ef4444}.db{background:#94a3b8}
+
+/* ── TRADER CARD ── */
+.trader-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-top:.5rem}
+.trader-card{border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;background:var(--bg)}
+.tc-head{display:flex;align-items:center;gap:10px;padding:1rem;border-bottom:1px solid var(--border);background:var(--bg2)}
+.tc-logo{width:44px;height:44px;border-radius:50%;object-fit:cover;background:var(--bg3);border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--tx2)}
+.tc-name{font-weight:700;font-size:14px}
+.tc-sub{font-size:11px;color:var(--tx3);margin-top:1px}
+.tc-online{margin-left:auto;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px}
+.tc-body{padding:.85rem 1rem}
+.tc-stat{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px}
+.tc-label{color:var(--tx3)}
+.tc-value{font-weight:700}
+.tc-actions{display:flex;gap:6px;padding:.75rem 1rem;border-top:1px solid var(--border)}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:none;align-items:center;justify-content:center;padding:1rem}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg);border-radius:var(--rl);padding:1.5rem;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.18)}
+.modal-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem}
+.modal-t{font-size:15px;font-weight:700}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--tx2);line-height:1}
+
+/* ── MISC ── */
+.empty{text-align:center;padding:2rem;font-size:12px;color:var(--tx3)}
+.divider{border:none;border-top:1px solid var(--border);margin:1rem 0}
+.mono{font-family:var(--mono);font-size:11px}
+.sr{display:flex;gap:8px;align-items:center}
+.toast{position:fixed;bottom:20px;right:20px;background:#111;color:#fff;border-radius:var(--r);padding:9px 16px;font-size:12px;font-weight:600;z-index:9999;display:none;animation:tIn .2s ease}
+@keyframes tIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.profit-pos{color:var(--success);font-weight:700}
+.profit-neg{color:var(--danger);font-weight:700}
+.tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px}
+.history-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}
+.history-row:last-child{border-bottom:none}
+</style>
+</head>
+<body>
+
+<div class="shell">
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">&#9670; AdminPanel</div>
+    <div class="logo-sub">Investment Platform</div>
+  </div>
+  <nav>
+    <div class="ns">Overview</div>
+    <div class="ni active" onclick="nav('dashboard',this)">
+      <svg viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+      Dashboard
+    </div>
+    <div class="ns">Users</div>
+    <div class="ni" onclick="nav('users',this)">
+      <svg viewBox="0 0 16 16"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+      All Users
+    </div>
+    <div class="ni" onclick="nav('kyc',this)">
+      <svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 8h6M5 5h6M5 11h4"/></svg>
+      KYC Verification
+      <span class="badge-count" id="kyc-badge">0</span>
+    </div>
+    <div class="ns">Finance</div>
+    <div class="ni" onclick="nav('deposits',this)">
+      <svg viewBox="0 0 16 16"><path d="M8 2v8M5 7l3 3 3-3"/><path d="M3 12h10"/></svg>
+      Deposits
+      <span class="badge-count" id="dep-badge">0</span>
+    </div>
+    <div class="ni" onclick="nav('withdrawals',this)">
+      <svg viewBox="0 0 16 16"><path d="M8 10V2M5 5l3-3 3 3"/><path d="M3 12h10"/></svg>
+      Withdrawals
+      <span class="badge-count" id="wd-badge">0</span>
+    </div>
+    <div class="ni" onclick="nav('profit',this)">
+      <svg viewBox="0 0 16 16"><path d="M2 12l3-3 3 3 4-5"/><circle cx="13" cy="4" r="1.5" fill="currentColor" stroke="none"/></svg>
+      Profit Manager
+    </div>
+    <div class="ns">Configuration</div>
+    <div class="ni" onclick="nav('traders',this)">
+      <svg viewBox="0 0 16 16"><circle cx="6" cy="5" r="2.5"/><circle cx="12" cy="8" r="2"/><path d="M2 13c0-2.2 1.8-4 4-4"/><path d="M9 13c0-1.7 1.3-3 3-3"/></svg>
+      Traders
+    </div>
+    <div class="ni" onclick="nav('wallets',this)">
+      <svg viewBox="0 0 16 16"><rect x="1" y="4" width="14" height="10" rx="1.5"/><circle cx="11" cy="9" r="1.2" fill="currentColor" stroke="none"/><path d="M4 4V3a1 1 0 011-1h6a1 1 0 011 1v1"/></svg>
+      Wallet Addresses
+    </div>
+    <div class="ni" onclick="nav('plans',this)">
+      <svg viewBox="0 0 16 16"><path d="M2 12l4-5 3 3 5-6"/></svg>
+      Investment Plans
+    </div>
+    <div class="ns">Auth</div>
+    <div class="ni" onclick="nav('login',this)">
+      <svg viewBox="0 0 16 16"><path d="M10 8H3M6 5l-3 3 3 3"/><path d="M8 4h4a1 1 0 011 1v6a1 1 0 01-1 1H8"/></svg>
+      Admin Login
+    </div>
+  </nav>
+  <div class="sf">v2.0 &mdash; Secure Panel</div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main">
+
+<!-- ██ DASHBOARD ██ -->
+<div class="page active" id="page-dashboard">
+  <div class="ph"><div><div class="pt">Dashboard</div><div class="ps">Platform overview</div></div></div>
+  <div class="g4">
+    <div class="mc"><div class="ml">Total Users</div><div class="mv" id="d-users">—</div><span class="mb bi">Registered</span></div>
+    <div class="mc"><div class="ml">Pending Deposits</div><div class="mv" id="d-deps">—</div><span class="mb bw">Awaiting review</span></div>
+    <div class="mc"><div class="ml">Pending Withdrawals</div><div class="mv" id="d-wds">—</div><span class="mb bw">Awaiting review</span></div>
+    <div class="mc"><div class="ml">KYC Pending</div><div class="mv" id="d-kyc">—</div><span class="mb bd">Needs review</span></div>
+  </div>
+  <div class="g3">
+    <div class="mc"><div class="ml">Active Traders</div><div class="mv" id="d-traders">—</div><span class="mb bs">Live</span></div>
+    <div class="mc"><div class="ml">Active Plans</div><div class="mv" id="d-plans">—</div><span class="mb bs">Configured</span></div>
+    <div class="mc"><div class="ml">Wallets</div><div class="mv" id="d-wallets">—</div><span class="mb bs">Set up</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div class="card">
+      <div class="ch"><div class="ct">Recent Deposits</div><button class="btn btn-sm" onclick="nav('deposits',document.querySelector('.ni:nth-child(8)'))">View all</button></div>
+      <table><thead><tr><th>User</th><th>Amount</th><th>Status</th></tr></thead><tbody id="d-dep-table"></tbody></table>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Recent Withdrawals</div><button class="btn btn-sm" onclick="nav('withdrawals',document.querySelector('.ni:nth-child(9)'))">View all</button></div>
+      <table><thead><tr><th>User</th><th>Amount</th><th>Status</th></tr></thead><tbody id="d-wd-table"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ██ USERS ██ -->
+<div class="page" id="page-users">
+  <div class="ph"><div><div class="pt">Users</div><div class="ps">Manage all registered accounts</div></div></div>
+  <div class="card">
+    <div class="ch">
+      <div class="sr"><input type="text" id="user-search" placeholder="Search name or email…" oninput="filterUsers()" style="width:210px"><button class="btn btn-sm" onclick="renderUsers()">Refresh</button></div>
+      <span id="u-count" style="font-size:11px;color:var(--tx3)"></span>
+    </div>
+    <table>
+      <thead><tr><th>User</th><th>Email</th><th>Balance</th><th>Profit</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+      <tbody id="users-table"><tr><td colspan="7" class="empty">Loading…</td></tr></tbody>
+    </table>
+  </div>
+  <!-- Edit panel -->
+  <div class="card" id="edit-user-panel" style="display:none">
+    <div class="ch"><div class="ct">&#9998; Edit User</div><button class="btn btn-sm" onclick="closeEdit()">&#215; Close</button></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">First name</label><input id="ef-fname" type="text"></div>
+      <div class="fg"><label class="fl">Last name</label><input id="ef-lname" type="text"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Email</label><input id="ef-email" type="email"></div>
+      <div class="fg"><label class="fl">Phone</label><input id="ef-phone" type="text"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Country</label><input id="ef-country" type="text"></div>
+      <div class="fg"><label class="fl">Status</label><select id="ef-status"><option value="active">Active</option><option value="suspended">Suspended</option><option value="pending">Pending</option></select></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Balance ($)</label><input id="ef-balance" type="number" step="0.01"></div>
+      <div class="fg"><label class="fl">Profit ($)</label><input id="ef-profit" type="number" step="0.01"></div>
+    </div>
+    <hr class="divider">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-p" onclick="saveUser()">&#10003; Save changes</button>
+      <button class="btn btn-d" onclick="deleteUser()">&#128465; Delete user</button>
+    </div>
+    <input type="hidden" id="ef-id">
+  </div>
+</div>
+
+<!-- ██ KYC ██ -->
+<div class="page" id="page-kyc">
+  <div class="ph"><div><div class="pt">KYC Verification</div><div class="ps">Review identity documents</div></div></div>
+  <div class="tabs">
+    <div class="tab active" onclick="kycTab('all',this)">All</div>
+    <div class="tab" onclick="kycTab('pending',this)">Pending</div>
+    <div class="tab" onclick="kycTab('approved',this)">Approved</div>
+    <div class="tab" onclick="kycTab('rejected',this)">Rejected</div>
+  </div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Owner</th><th>Email</th><th>Doc #</th><th>Docs</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="kyc-table"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ██ DEPOSITS ██ -->
+<div class="page" id="page-deposits">
+  <div class="ph"><div><div class="pt">Deposits</div><div class="ps">Review and approve deposit requests</div></div></div>
+  <div class="tabs">
+    <div class="tab active" onclick="depTab('all',this)">All</div>
+    <div class="tab" onclick="depTab('pending',this)">Pending</div>
+    <div class="tab" onclick="depTab('approved',this)">Approved</div>
+    <div class="tab" onclick="depTab('declined',this)">Declined</div>
+  </div>
+  <div class="card">
+    <table>
+      <thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Tx Hash</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="dep-table"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ██ WITHDRAWALS ██ -->
+<div class="page" id="page-withdrawals">
+  <div class="ph"><div><div class="pt">Withdrawals</div><div class="ps">Review and process withdrawal requests</div></div></div>
+  <div class="tabs">
+    <div class="tab active" onclick="wdTab('all',this)">All</div>
+    <div class="tab" onclick="wdTab('pending',this)">Pending</div>
+    <div class="tab" onclick="wdTab('approved',this)">Approved</div>
+    <div class="tab" onclick="wdTab('declined',this)">Declined</div>
+  </div>
+  <div class="card">
+    <table>
+      <thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Wallet</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="wd-table"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ██ PROFIT MANAGER ██ -->
+<div class="page" id="page-profit">
+  <div class="ph"><div><div class="pt">Profit Manager</div><div class="ps">Add or deduct profit for any user</div></div></div>
+  <div class="card">
+    <div class="ch"><div class="ct">Select user</div></div>
+    <div class="sr" style="margin-bottom:.75rem">
+      <input type="text" id="profit-search" placeholder="Search user by name or email…" oninput="filterProfitUsers()" style="width:240px">
+    </div>
+    <table>
+      <thead><tr><th>User</th><th>Email</th><th>Balance</th><th>Profit</th><th>Action</th></tr></thead>
+      <tbody id="profit-users-table"></tbody>
+    </table>
+  </div>
+  <!-- Profit edit panel -->
+  <div class="card" id="profit-panel" style="display:none">
+    <div class="ch"><div class="ct">Manage profit for <span id="profit-user-name" style="color:var(--info)"></span></div><button class="btn btn-sm" onclick="closeProfitPanel()">&#215; Close</button></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Amount ($)</label><input id="pp-amount" type="number" step="0.01" placeholder="0.00"></div>
+      <div class="fg"><label class="fl">Note (optional)</label><input id="pp-note" type="text" placeholder="Reason…"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-s" onclick="applyProfit('add')">&#43; Add Profit</button>
+      <button class="btn btn-d" onclick="applyProfit('deduct')">&#8722; Deduct Profit</button>
+    </div>
+    <hr class="divider">
+    <div class="ct" style="margin-bottom:.6rem;font-size:12px">Profit history</div>
+    <div id="profit-history"></div>
+    <input type="hidden" id="pp-uid">
+  </div>
+</div>
+
+<!-- ██ TRADERS ██ -->
+<div class="page" id="page-traders">
+  <div class="ph">
+    <div><div class="pt">Traders</div><div class="ps">Manage copy-trading profiles and user histories</div></div>
+    <button class="btn btn-p" onclick="openTraderModal()">+ New Trader</button>
+  </div>
+  <div class="trader-grid" id="traders-grid"></div>
+  <!-- Trade history panel -->
+  <div class="card" id="trade-history-panel" style="display:none;margin-top:1rem">
+    <div class="ch">
+      <div><div class="ct">Trade History &mdash; <span id="th-trader-name" style="color:var(--info)"></span></div>
+      <div style="font-size:11px;color:var(--tx3);margin-top:2px">User: <span id="th-user-name"></span></div></div>
+      <div class="ch-right">
+        <button class="btn btn-p btn-sm" onclick="openAddTradeModal()">+ Add Trade</button>
+        <button class="btn btn-sm" onclick="closeTradeHistory()">&#215; Close</button>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>Pair</th><th>Type</th><th>Amount</th><th>Profit/Loss</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody id="trade-history-table"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ██ WALLETS ██ -->
+<div class="page" id="page-wallets">
+  <div class="ph"><div><div class="pt">Wallet Addresses</div><div class="ps">Deposit addresses shown on your site</div></div><button class="btn btn-p" onclick="addWallet()">+ Add Wallet</button></div>
+  <div class="card">
+    <div id="wallets-list"></div>
+    <hr class="divider">
+    <button class="btn btn-p" onclick="saveWallets()">&#10003; Save all</button>
+  </div>
+</div>
+
+<!-- ██ PLANS ██ -->
+<div class="page" id="page-plans">
+  <div class="ph"><div><div class="pt">Investment Plans</div><div class="ps">Create and manage investment packages</div></div><button class="btn btn-p" onclick="showPlanForm()">+ New Plan</button></div>
+  <div class="card"><div id="plans-list"></div></div>
+  <div class="card" id="plan-form-card" style="display:none">
+    <div class="ch"><div class="ct" id="plan-form-title">New plan</div><button class="btn btn-sm" onclick="hidePlanForm()">Cancel</button></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Plan name *</label><input id="pf-name" type="text" placeholder="Gold"></div>
+      <div class="fg"><label class="fl">ROI (%) *</label><input id="pf-roi" type="number" step="0.1" placeholder="15"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Min deposit ($) *</label><input id="pf-min" type="number" placeholder="500"></div>
+      <div class="fg"><label class="fl">Max deposit ($) *</label><input id="pf-max" type="number" placeholder="5000"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Duration (days) *</label><input id="pf-duration" type="number" placeholder="30"></div>
+      <div class="fg"><label class="fl">Payout frequency</label><select id="pf-payout"><option>Daily</option><option>Weekly</option><option>Monthly</option><option>On maturity</option></select></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Referral bonus (%)</label><input id="pf-ref" type="number" step="0.1" placeholder="5"></div>
+      <div class="fg"><label class="fl">Status</label><select id="pf-status"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+    </div>
+    <div class="fg full" style="margin-bottom:10px"><label class="fl">Description</label><textarea id="pf-desc" placeholder="Describe this plan…"></textarea></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-p" onclick="savePlan()">&#10003; Save plan</button>
+      <button class="btn btn-d" id="delete-plan-btn" onclick="deletePlan()" style="display:none">Delete</button>
+    </div>
+    <input type="hidden" id="pf-id">
+  </div>
+</div>
+
+<!-- ██ LOGIN ██ -->
+<div class="page" id="page-login">
+  <div class="ph"><div><div class="pt">Admin Login</div><div class="ps">Frontend login page preview & API reference</div></div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="card">
+      <div class="ch"><div class="ct">Admin Login Form</div></div>
+      <div class="fg" style="margin-bottom:10px"><label class="fl">Email address</label><input type="email" id="login-email" placeholder="admin@example.com"></div>
+      <div class="fg" style="margin-bottom:14px"><label class="fl">Password</label><input type="password" id="login-pass" placeholder="••••••••"></div>
+      <button class="btn btn-p" style="width:100%;justify-content:center" onclick="doAdminLogin()">Sign in as Admin</button>
+      <div style="margin-top:1rem;font-size:11px;color:var(--tx3);text-align:center">POST /auth/admin/login</div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">User Login Form</div></div>
+      <div class="fg" style="margin-bottom:10px"><label class="fl">Email address</label><input type="email" id="ulogin-email" placeholder="user@example.com"></div>
+      <div class="fg" style="margin-bottom:14px"><label class="fl">Password</label><input type="password" id="ulogin-pass" placeholder="••••••••"></div>
+      <button class="btn btn-p" style="width:100%;justify-content:center" onclick="doUserLogin()">Sign in as User</button>
+      <div style="margin-top:1rem;font-size:11px;color:var(--tx3);text-align:center">POST /auth/login</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ct">API Endpoint Reference</div></div>
+    <div style="font-size:11px;line-height:2.2;font-family:var(--mono);background:var(--bg2);padding:.9rem;border-radius:var(--r)">
+      POST /auth/login &nbsp;&nbsp;&nbsp;&mdash; User login &rarr; returns JWT token<br>
+      POST /auth/register &nbsp;&mdash; New user signup<br>
+      POST /auth/admin/login &mdash; Admin login &rarr; returns JWT<br>
+      <br>
+      POST /users/:id/profit/add &nbsp;&mdash; Add profit to user<br>
+      POST /users/:id/profit/deduct &mdash; Deduct profit<br>
+      GET &nbsp;/users/:id/profit &nbsp;&nbsp;&nbsp;&nbsp;&mdash; Get profit + history<br>
+      <br>
+      GET &nbsp;/deposits &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&mdash; All deposits (admin)<br>
+      POST /deposits &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&mdash; Submit deposit (user)<br>
+      PUT &nbsp;/deposits/:id/status &mdash; Approve / decline<br>
+      <br>
+      GET &nbsp;/withdrawals &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&mdash; All withdrawals (admin)<br>
+      POST /withdrawals &nbsp;&nbsp;&nbsp;&nbsp;&mdash; Submit withdrawal<br>
+      PUT &nbsp;/withdrawals/:id/status &mdash; Approve / decline<br>
+      <br>
+      GET &nbsp;/traders &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&mdash; All traders<br>
+      POST /traders &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&mdash; Create trader<br>
+      PUT &nbsp;/traders/:id &nbsp;&nbsp;&nbsp;&nbsp;&mdash; Update trader<br>
+      DELETE /traders/:id &nbsp;&nbsp;&nbsp;&mdash; Delete trader<br>
+      POST /traders/:id/connect &mdash; Connect user to trader<br>
+      POST /traders/:id/history/:userId &mdash; Add trade to user history<br>
+      GET &nbsp;/traders/:id/history/:userId &mdash; Get user's trade history<br>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- ═══ MODALS ═══ -->
+<!-- Trader modal -->
+<div class="modal-bg" id="trader-modal">
+  <div class="modal">
+    <div class="modal-h"><div class="modal-t" id="trader-modal-title">New Trader</div><button class="modal-close" onclick="closeTraderModal()">&#215;</button></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Name *</label><input id="tm-name" type="text" placeholder="Jane Doe"></div>
+      <div class="fg"><label class="fl">Photo URL</label><input id="tm-photo" type="text" placeholder="https://..."></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Followers (signal)</label><input id="tm-signal" type="number" placeholder="0"></div>
+      <div class="fg"><label class="fl">Total Trades (drawdown)</label><input id="tm-drawdown" type="number" placeholder="0"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Profit Rate</label><input id="tm-profit" type="text" placeholder="87.5%"></div>
+      <div class="fg"><label class="fl">Status</label><select id="tm-status"><option value="online">Online</option><option value="offline">Offline</option></select></div>
+    </div>
+    <div class="fg" style="margin-bottom:14px"><label class="fl">Bio</label><textarea id="tm-bio" placeholder="Short trader biography…"></textarea></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-p" onclick="saveTrader()">&#10003; Save</button>
+      <button class="btn btn-d" id="tm-delete-btn" onclick="deleteTrader()" style="display:none">Delete</button>
+    </div>
+    <input type="hidden" id="tm-id">
+  </div>
+</div>
+
+<!-- Connect user to trader modal -->
+<div class="modal-bg" id="connect-modal">
+  <div class="modal">
+    <div class="modal-h"><div class="modal-t">Connect User to Trader</div><button class="modal-close" onclick="closeConnectModal()">&#215;</button></div>
+    <div class="fg" style="margin-bottom:10px"><label class="fl">Select user</label>
+      <select id="connect-user-select"></select>
+    </div>
+    <button class="btn btn-p" onclick="connectUser()">&#10003; Connect</button>
+    <hr class="divider">
+    <div class="ct" style="font-size:12px;margin-bottom:.5rem">Connected users</div>
+    <div id="connected-users-list"></div>
+    <input type="hidden" id="connect-trader-id">
+  </div>
+</div>
+
+<!-- Add trade modal -->
+<div class="modal-bg" id="add-trade-modal">
+  <div class="modal">
+    <div class="modal-h"><div class="modal-t">Add Trade to History</div><button class="modal-close" onclick="closeAddTradeModal()">&#215;</button></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Pair *</label><input id="at-pair" type="text" placeholder="BTC/USDT"></div>
+      <div class="fg"><label class="fl">Type *</label><select id="at-type"><option value="buy">Buy</option><option value="sell">Sell</option></select></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Amount ($) *</label><input id="at-amount" type="number" step="0.01" placeholder="500"></div>
+      <div class="fg"><label class="fl">Profit/Loss ($)</label><input id="at-profit" type="number" step="0.01" placeholder="75.00"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Status</label><select id="at-status"><option value="closed">Closed</option><option value="open">Open</option><option value="pending">Pending</option></select></div>
+      <div class="fg"><label class="fl">Opened at</label><input id="at-date" type="date"></div>
+    </div>
+    <div class="fg" style="margin-bottom:14px"><label class="fl">Note</label><input id="at-note" type="text" placeholder="Optional note…"></div>
+    <button class="btn btn-p" onclick="submitTrade()">&#10003; Add Trade</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  API CONFIG
+// ═══════════════════════════════════════════
+const API = 'https://scottlsh-render.onrender.com';
+const headers = () => {
+  const h = {'Content-Type':'application/json'};
+  if(TOKEN) h['Authorization']='Bearer '+TOKEN;
+  return h;
+};
+async function apiFetch(path, opts={}){
+  const res = await fetch(API+path, {headers:headers(), ...opts});
+  if(!res.ok){
+    const err = await res.json().catch(()=>({message:res.statusText}));
+    throw new Error(err.message||res.statusText);
+  }
+  return res.json();
+}
+
+// ── In-memory state (populated from API) ──
+let USERS=[], KYC=[], DEPOSITS=[], WITHDRAWALS=[], TRADERS=[], WALLETS=[], PLANS=[];
+let TOKEN = localStorage.getItem('admin_token')||null;
+let editUid=null,editPlanId=null,kycFilter='all',depFilter='all',wdFilter='all';
+let activeTrader=null,activeUserId=null,editingTrader=null;
+const AVS=['av1','av2','av3','av4'];
+function av(i){return AVS[i%AVS.length]}
+function initials(n){return (n||'?').split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase()}
+function fmtUSD(n){return '$'+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fmtDate(d){return d?new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—'}
+
+function fmtDate(d){return d?new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—'}
+
+function toast(msg,err=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.background=err?'#9b1c1c':'#111';
+  t.style.display='block';clearTimeout(t._t);
+  t._t=setTimeout(()=>t.style.display='none',2800);
+}
+
+// ══ NAV ══
+function nav(page,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  if(el)el.classList.add('active');
+  ({dashboard:renderDash,users:renderUsers,kyc:renderKYC,deposits:renderDeposits,withdrawals:renderWithdrawals,profit:renderProfitPage,traders:renderTraders,wallets:renderWallets,plans:renderPlans}[page]||function(){})();
+  updateBadges();
+}
+
+function updateBadges(){
+  document.getElementById('kyc-badge').textContent=KYC.filter(k=>k.status==='pending').length;
+  document.getElementById('dep-badge').textContent=DEPOSITS.filter(d=>d.status==='pending').length;
+  document.getElementById('wd-badge').textContent=WITHDRAWALS.filter(w=>w.status==='pending').length;
+}
+
+// helper: resolve user name from a deposit/withdrawal record
+function uName(r){return r.userName||r.user?.name||r.user?.firstName+' '+r.user?.lastName||'Unknown'}
+
+// ══ DASHBOARD ══
+function renderDash(){
+  document.getElementById('d-users').textContent=USERS.length;
+  document.getElementById('d-deps').textContent=DEPOSITS.filter(d=>d.status==='pending').length;
+  document.getElementById('d-wds').textContent=WITHDRAWALS.filter(w=>w.status==='pending').length;
+  document.getElementById('d-kyc').textContent=KYC.filter(k=>k.status==='pending').length;
+  document.getElementById('d-traders').textContent=TRADERS.filter(t=>t.status==='online').length;
+  document.getElementById('d-plans').textContent=PLANS.filter(p=>p.status==='active').length;
+  document.getElementById('d-wallets').textContent=WALLETS.length;
+  const dtb=document.getElementById('d-dep-table');
+  dtb.innerHTML=DEPOSITS.slice(0,4).map((d,i)=>`<tr>
+    <td><div class="uc"><div class="av ${av(i)}">${initials(uName(d))}</div>${uName(d)}</div></td>
+    <td>${fmtUSD(d.amount)}</td>
+    <td><span class="tag ${d.status==='approved'?'bs':d.status==='declined'?'bd':'bw'}">${d.status}</span></td>
+  </tr>`).join('');
+  const wtb=document.getElementById('d-wd-table');
+  wtb.innerHTML=WITHDRAWALS.slice(0,4).map((w,i)=>`<tr>
+    <td><div class="uc"><div class="av ${av(i)}">${initials(uName(w))}</div>${uName(w)}</div></td>
+    <td>${fmtUSD(w.amount)}</td>
+    <td><span class="tag ${w.status==='approved'?'bs':w.status==='declined'?'bd':'bw'}">${w.status}</span></td>
+  </tr>`).join('');
+}
+
+// ══ USERS ══
+async function renderUsers(){
+  document.getElementById('users-table').innerHTML='<tr><td colspan="7" class="empty">Loading…</td></tr>';
+  try{
+    const data=await apiFetch('/users');
+    USERS=Array.isArray(data)?data:(data.users||data.data||[]);
+    USERS=USERS.map(u=>({...u,name:u.name||(u.firstName+' '+u.lastName).trim()||u.email,balance:u.balance||u.walletBalance||0,profit:u.profit||u.totalProfit||0,joined:u.joined||u.createdAt}));
+    filterUsers();
+  }catch(e){document.getElementById('users-table').innerHTML=`<tr><td colspan="7" class="empty">Error: ${e.message}</td></tr>`;}
+}
+function filterUsers(){
+  const q=document.getElementById('user-search').value.toLowerCase();
+  const list=q?USERS.filter(u=>(u.name||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q)):USERS;
+  document.getElementById('u-count').textContent=list.length+' users';
+  const tb=document.getElementById('users-table');
+  tb.innerHTML=list.length?list.map((u,i)=>`<tr>
+    <td><div class="uc"><div class="av ${av(i)}">${initials(u.name)}</div><div><div style="font-weight:600">${u.name}</div><div style="font-size:10px;color:var(--tx3)">${u.country||''}</div></div></div></td>
+    <td style="color:var(--tx2);font-size:11px">${u.email}</td>
+    <td>${fmtUSD(u.balance)}</td>
+    <td class="${u.profit>=0?'profit-pos':'profit-neg'}">${fmtUSD(u.profit)}</td>
+    <td><span class="tag ${u.status==='active'?'bs':u.status==='suspended'?'bd':'bw'}">${u.status||'—'}</span></td>
+    <td style="font-size:11px;color:var(--tx3)">${fmtDate(u.joined)}</td>
+    <td><button class="btn btn-sm" onclick="openEdit('${u._id}')">Edit</button></td>
+  </tr>`).join(''):`<tr><td colspan="7" class="empty">No users found</td></tr>`;
+}
+function openEdit(id){
+  const u=USERS.find(x=>x._id===id);if(!u)return;editUid=id;
+  const pts=(u.name||'').split(' ');
+  document.getElementById('ef-fname').value=u.firstName||pts[0]||'';
+  document.getElementById('ef-lname').value=u.lastName||pts.slice(1).join(' ')||'';
+  document.getElementById('ef-email').value=u.email||'';
+  document.getElementById('ef-phone').value=u.phone||'';
+  document.getElementById('ef-country').value=u.country||'';
+  document.getElementById('ef-status').value=u.status||'active';
+  document.getElementById('ef-balance').value=u.balance||0;
+  document.getElementById('ef-profit').value=u.profit||0;
+  document.getElementById('ef-id').value=id;
+  const p=document.getElementById('edit-user-panel');p.style.display='block';p.scrollIntoView({behavior:'smooth'});
+}
+function closeEdit(){document.getElementById('edit-user-panel').style.display='none';editUid=null}
+async function saveUser(){
+  const fn=document.getElementById('ef-fname').value.trim();
+  const ln=document.getElementById('ef-lname').value.trim();
+  const em=document.getElementById('ef-email').value.trim();
+  if(!fn||!em){toast('Name and email required',true);return}
+  const payload={firstName:fn,lastName:ln,name:(fn+' '+ln).trim(),email:em,phone:document.getElementById('ef-phone').value,country:document.getElementById('ef-country').value,status:document.getElementById('ef-status').value,balance:parseFloat(document.getElementById('ef-balance').value)||0,profit:parseFloat(document.getElementById('ef-profit').value)||0};
+  try{
+    await apiFetch('/users/'+editUid,{method:'PUT',body:JSON.stringify(payload)});
+    const u=USERS.find(x=>x._id===editUid);if(u)Object.assign(u,payload);
+    toast('User updated');closeEdit();filterUsers();
+  }catch(e){toast('Save failed: '+e.message,true);}
+}
+async function deleteUser(){
+  if(!confirm('Delete user permanently?'))return;
+  try{
+    await apiFetch('/users/'+editUid,{method:'DELETE'});
+    USERS=USERS.filter(x=>x._id!==editUid);
+    toast('User deleted');closeEdit();filterUsers();
+  }catch(e){toast('Delete failed: '+e.message,true);}
+}
+
+// ══ KYC ══
+async function renderKYC(){
+  document.getElementById('kyc-table').innerHTML='<tr><td colspan="6" class="empty">Loading…</td></tr>';
+  try{
+    const data=await apiFetch('/auth/kyc');
+    KYC=Array.isArray(data)?data:(data.kyc||data.data||[]);
+    KYC=KYC.map(k=>({...k,owner:k.owner||k.fullName||(k.user?.name)||k.user?.email||'Unknown',email:k.email||k.user?.email||''}));
+    renderKYCTable();updateBadges();
+  }catch(e){document.getElementById('kyc-table').innerHTML=`<tr><td colspan="6" class="empty">Error: ${e.message}</td></tr>`;}
+}
+function renderKYCTable(){
+  const list=kycFilter==='all'?KYC:KYC.filter(k=>k.status===kycFilter);
+  const tb=document.getElementById('kyc-table');
+  tb.innerHTML=list.length?list.map((k,i)=>{
+    const c=k.status==='approved'?'bs':k.status==='rejected'?'bd':'bw';
+    const imgs=Array.isArray(k.imageUrl)?k.imageUrl:(k.documents||[]);
+    return`<tr>
+      <td><div class="uc"><div class="av ${av(i)}">${initials(k.owner)}</div>${k.owner}</div></td>
+      <td style="font-size:11px;color:var(--tx2)">${k.email}</td>
+      <td class="mono">${k.docNum||k.documentNumber||'—'}</td>
+      <td><div style="display:flex;gap:3px">${imgs.map(x=>`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:10px;color:var(--tx3)">DOC</div>`).join('')||'—'}</div></td>
+      <td><span class="tag ${c}">${k.status}</span></td>
+      <td><div style="display:flex;gap:5px">
+        ${k.status!=='approved'?`<button class="btn btn-sm btn-s" onclick="setKYC('${k._id}','approved')">Approve</button>`:''}
+        ${k.status!=='rejected'?`<button class="btn btn-sm btn-d" onclick="setKYC('${k._id}','rejected')">Reject</button>`:''}
+      </div></td>
+    </tr>`}).join(''):`<tr><td colspan="6" class="empty">No records</td></tr>`;
+}
+function kycTab(f,el){kycFilter=f;document.querySelectorAll('#page-kyc .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderKYCTable()}
+async function setKYC(id,s){
+  try{
+    await apiFetch('/kyc/'+id+'/status',{method:'PUT',body:JSON.stringify({status:s})});
+    const k=KYC.find(x=>x._id===id);if(k)k.status=s;
+    toast('KYC '+s);renderKYCTable();updateBadges();
+  }catch(e){toast('Failed: '+e.message,true);}
+}
+
+// ══ DEPOSITS ══
+async function renderDeposits(){
+  document.getElementById('dep-table').innerHTML='<tr><td colspan="7" class="empty">Loading…</td></tr>';
+  try{
+    const data=await apiFetch('/deposits');
+    DEPOSITS=Array.isArray(data)?data:(data.deposits||data.data||[]);
+    DEPOSITS=DEPOSITS.map(d=>({...d,userName:d.userName||d.user?.name||(d.user?.firstName+' '+d.user?.lastName)||d.user?.email||'Unknown',createdAt:d.createdAt||d.date}));
+    renderDepTable();updateBadges();
+  }catch(e){document.getElementById('dep-table').innerHTML=`<tr><td colspan="7" class="empty">Error: ${e.message}</td></tr>`;}
+}
+function renderDepTable(){
+  const list=depFilter==='all'?DEPOSITS:DEPOSITS.filter(d=>d.status===depFilter);
+  const tb=document.getElementById('dep-table');
+  tb.innerHTML=list.length?list.map((d,i)=>{
+    const c=d.status==='approved'?'bs':d.status==='declined'?'bd':'bw';
+    return`<tr>
+      <td><div class="uc"><div class="av ${av(i)}">${initials(d.userName)}</div>${d.userName}</div></td>
+      <td style="font-weight:700">${fmtUSD(d.amount)}</td>
+      <td>${d.method||'—'}</td>
+      <td class="mono" style="max-width:100px;overflow:hidden;text-overflow:ellipsis">${d.txHash||'—'}</td>
+      <td style="font-size:11px;color:var(--tx3)">${fmtDate(d.createdAt)}</td>
+      <td><span class="tag ${c}">${d.status}</span></td>
+      <td><div style="display:flex;gap:5px">
+        ${d.status==='pending'?`<button class="btn btn-sm btn-s" onclick="setDep('${d._id}','approved')">Approve</button><button class="btn btn-sm btn-d" onclick="setDep('${d._id}','declined')">Decline</button>`:''}
+      </div></td>
+    </tr>`}).join(''):`<tr><td colspan="7" class="empty">No records</td></tr>`;
+}
+function depTab(f,el){depFilter=f;document.querySelectorAll('#page-deposits .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderDepTable()}
+async function setDep(id,s){
+  try{
+    await apiFetch('/deposits/'+id+'/status',{method:'PUT',body:JSON.stringify({status:s})});
+    const d=DEPOSITS.find(x=>x._id===id);if(d)d.status=s;
+    toast('Deposit '+s);renderDepTable();updateBadges();renderDash();
+  }catch(e){toast('Failed: '+e.message,true);}
+}
+
+// ══ WITHDRAWALS ══
+async function renderWithdrawals(){
+  document.getElementById('wd-table').innerHTML='<tr><td colspan="7" class="empty">Loading…</td></tr>';
+  try{
+    const data=await apiFetch('/withdrawals');
+    WITHDRAWALS=Array.isArray(data)?data:(data.withdrawals||data.data||[]);
+    WITHDRAWALS=WITHDRAWALS.map(w=>({...w,userName:w.userName||w.user?.name||(w.user?.firstName+' '+w.user?.lastName)||w.user?.email||'Unknown',createdAt:w.createdAt||w.date}));
+    renderWdTable();updateBadges();
+  }catch(e){document.getElementById('wd-table').innerHTML=`<tr><td colspan="7" class="empty">Error: ${e.message}</td></tr>`;}
+}
+function renderWdTable(){
+  const list=wdFilter==='all'?WITHDRAWALS:WITHDRAWALS.filter(w=>w.status===wdFilter);
+  const tb=document.getElementById('wd-table');
+  tb.innerHTML=list.length?list.map((w,i)=>{
+    const c=w.status==='approved'?'bs':w.status==='declined'?'bd':'bw';
+    return`<tr>
+      <td><div class="uc"><div class="av ${av(i)}">${initials(w.userName)}</div>${w.userName}</div></td>
+      <td style="font-weight:700">${fmtUSD(w.amount)}</td>
+      <td>${w.method||'—'}</td>
+      <td class="mono" style="max-width:110px;overflow:hidden;text-overflow:ellipsis" title="${w.walletAddress||''}">${w.walletAddress||'—'}</td>
+      <td style="font-size:11px;color:var(--tx3)">${fmtDate(w.createdAt)}</td>
+      <td><span class="tag ${c}">${w.status}</span></td>
+      <td><div style="display:flex;gap:5px">
+        ${w.status==='pending'?`<button class="btn btn-sm btn-s" onclick="setWd('${w._id}','approved')">Approve</button><button class="btn btn-sm btn-d" onclick="setWd('${w._id}','declined')">Decline</button>`:''}
+      </div></td>
+    </tr>`}).join(''):`<tr><td colspan="7" class="empty">No records</td></tr>`;
+}
+function wdTab(f,el){wdFilter=f;document.querySelectorAll('#page-withdrawals .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderWdTable()}
+async function setWd(id,s){
+  try{
+    await apiFetch('/withdrawals/'+id+'/status',{method:'PUT',body:JSON.stringify({status:s})});
+    const w=WITHDRAWALS.find(x=>x._id===id);if(w)w.status=s;
+    toast('Withdrawal '+s);renderWdTable();updateBadges();renderDash();
+  }catch(e){toast('Failed: '+e.message,true);}
+}
+
+// ══ PROFIT ══
+function renderProfitPage(){filterProfitUsers()}
+function filterProfitUsers(){
+  const q=document.getElementById('profit-search').value.toLowerCase();
+  const list=q?USERS.filter(u=>(u.name||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q)):USERS;
+  const tb=document.getElementById('profit-users-table');
+  tb.innerHTML=list.length?list.map((u,i)=>`<tr>
+    <td><div class="uc"><div class="av ${av(i)}">${initials(u.name)}</div>${u.name}</div></td>
+    <td style="font-size:11px;color:var(--tx2)">${u.email}</td>
+    <td>${fmtUSD(u.balance)}</td>
+    <td class="${u.profit>=0?'profit-pos':'profit-neg'}">${fmtUSD(u.profit)}</td>
+    <td><button class="btn btn-sm btn-p" onclick="openProfitPanel('${u._id}')">Manage</button></td>
+  </tr>`).join(''):`<tr><td colspan="5" class="empty">No users</td></tr>`;
+}
+async function openProfitPanel(id){
+  const u=USERS.find(x=>x._id===id);if(!u)return;
+  document.getElementById('pp-uid').value=id;
+  document.getElementById('profit-user-name').textContent=u.name;
+  document.getElementById('pp-amount').value='';
+  document.getElementById('pp-note').value='';
+  // fetch profit history from API
+  try{
+    const data=await apiFetch('/users/'+id+'/profit');
+    u.profit=data.profit??data.totalProfit??u.profit;
+    u.profitHistory=data.history||data.profitHistory||[];
+  }catch(e){u.profitHistory=u.profitHistory||[];}
+  renderProfitHistory(u);
+  const p=document.getElementById('profit-panel');p.style.display='block';p.scrollIntoView({behavior:'smooth'});
+}
+function closeProfitPanel(){document.getElementById('profit-panel').style.display='none'}
+function renderProfitHistory(u){
+  const el=document.getElementById('profit-history');
+  if(!u.profitHistory||!u.profitHistory.length){el.innerHTML='<div class="empty" style="padding:1rem">No history yet</div>';return}
+  el.innerHTML=u.profitHistory.slice().reverse().map(h=>`
+    <div class="history-row">
+      <div><span class="${(h.amount||h.value)>=0?'profit-pos':'profit-neg'}">${(h.amount||h.value)>=0?'+':''}${fmtUSD(h.amount||h.value)}</span> ${h.note?`<span style="color:var(--tx3);font-size:11px">&mdash; ${h.note}</span>`:''}</div>
+      <div style="font-size:10px;color:var(--tx3)">${fmtDate(h.date||h.createdAt)}</div>
+    </div>`).join('');
+}
+async function applyProfit(op){
+  const uid=document.getElementById('pp-uid').value;
+  const amt=parseFloat(document.getElementById('pp-amount').value);
+  const note=document.getElementById('pp-note').value.trim();
+  if(!amt||isNaN(amt)||amt<=0){toast('Enter a valid amount',true);return}
+  try{
+    const endpoint='/users/'+uid+'/profit/'+(op==='add'?'add':'deduct');
+    const data=await apiFetch(endpoint,{method:'POST',body:JSON.stringify({amount:amt,note})});
+    const u=USERS.find(x=>x._id===uid);
+    if(u){
+      const delta=op==='add'?amt:-amt;
+      u.profit=(u.profit||0)+delta;
+      u.profitHistory=u.profitHistory||[];
+      u.profitHistory.push({amount:delta,note,date:new Date().toISOString()});
+      renderProfitHistory(u);
+    }
+    toast(op==='add'?'Profit added':'Profit deducted');
+    filterProfitUsers();
+  }catch(e){toast('Failed: '+e.message,true);}
+}
+
+// ══ TRADERS ══
+async function renderTraders(){
+  document.getElementById('traders-grid').innerHTML='<div class="empty" style="grid-column:1/-1">Loading…</div>';
+  try{
+    const data=await apiFetch('/traders');
+    TRADERS=Array.isArray(data)?data:(data.traders||data.data||[]);
+    TRADERS=TRADERS.map(t=>({...t,connections:t.connections||t.connectedUsers||[],histories:t.histories||{}}));
+    renderTraderCards();
+  }catch(e){document.getElementById('traders-grid').innerHTML=`<div class="empty" style="grid-column:1/-1">Error: ${e.message}</div>`;}
+}
+function renderTraderCards(){
+  const g=document.getElementById('traders-grid');
+  g.innerHTML=TRADERS.map(t=>{
+    const photoEl=t.photo?`<img src="${t.photo}" style="width:44px;height:44px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'">`:
+      `<div class="tc-logo">${initials(t.name)}</div>`;
+    return`<div class="trader-card">
+      <div class="tc-head">
+        ${photoEl}
+        <div style="flex:1;min-width:0">
+          <div class="tc-name">${t.name}</div>
+          <div class="tc-sub">Followers: ${(t.signal||0).toLocaleString()}</div>
+        </div>
+        <span class="tc-online tag ${t.status==='online'?'bs':'bx'}">${t.status}</span>
+      </div>
+      <div class="tc-body">
+        <div class="tc-stat"><span class="tc-label">Total Trades</span><span class="tc-value">${(t.drawdown||0).toLocaleString()}</span></div>
+        <div class="tc-stat"><span class="tc-label">Profit Rate</span><span class="tc-value profit-pos">${t.profit||'—'}</span></div>
+        <div class="tc-stat"><span class="tc-label">Connected Users</span><span class="tc-value">${(t.connections||[]).length}</span></div>
+        ${t.bio?`<div style="font-size:11px;color:var(--tx3);margin-top:6px;line-height:1.4">${t.bio}</div>`:''}
+      </div>
+      <div class="tc-actions">
+        <button class="btn btn-sm btn-p" onclick="openConnectModal('${t._id}')">Users</button>
+        <button class="btn btn-sm" onclick="openTraderModal('${t._id}')">Edit</button>
+        <button class="btn btn-sm btn-d" onclick="deleteTraderById('${t._id}')">Delete</button>
+      </div>
+    </div>`}).join('')||'<div class="empty" style="grid-column:1/-1">No traders yet. Create your first one.</div>';
+}
+
+function openTraderModal(id){
+  editingTrader=id||null;
+  document.getElementById('trader-modal-title').textContent=id?'Edit Trader':'New Trader';
+  document.getElementById('tm-delete-btn').style.display=id?'inline-flex':'none';
+  if(id){
+    const t=TRADERS.find(x=>x._id===id);if(!t)return;
+    document.getElementById('tm-name').value=t.name;
+    document.getElementById('tm-photo').value=t.photo||'';
+    document.getElementById('tm-signal').value=t.signal||0;
+    document.getElementById('tm-drawdown').value=t.drawdown||0;
+    document.getElementById('tm-profit').value=t.profit||'';
+    document.getElementById('tm-status').value=t.status||'online';
+    document.getElementById('tm-bio').value=t.bio||'';
+    document.getElementById('tm-id').value=id;
+  } else {
+    ['tm-name','tm-photo','tm-signal','tm-drawdown','tm-profit','tm-bio'].forEach(f=>document.getElementById(f).value='');
+    document.getElementById('tm-status').value='online';
+    document.getElementById('tm-id').value='';
+  }
+  document.getElementById('trader-modal').classList.add('open');
+}
+function closeTraderModal(){document.getElementById('trader-modal').classList.remove('open')}
+async function saveTrader(){
+  const name=document.getElementById('tm-name').value.trim();
+  if(!name){toast('Name is required',true);return}
+  const data={name,photo:document.getElementById('tm-photo').value,signal:parseInt(document.getElementById('tm-signal').value)||0,drawdown:parseInt(document.getElementById('tm-drawdown').value)||0,profit:document.getElementById('tm-profit').value||'0%',status:document.getElementById('tm-status').value,bio:document.getElementById('tm-bio').value};
+  try{
+    if(editingTrader){
+      await apiFetch('/traders/'+editingTrader,{method:'PUT',body:JSON.stringify(data)});
+      const t=TRADERS.find(x=>x._id===editingTrader);if(t)Object.assign(t,data);
+      toast('Trader updated');
+    } else {
+      const res=await apiFetch('/traders',{method:'POST',body:JSON.stringify(data)});
+      TRADERS.push({...res,...data,_id:res._id||res.id,connections:[],histories:{}});
+      toast('Trader created');
+    }
+    closeTraderModal();renderTraderCards();
+  }catch(e){toast('Save failed: '+e.message,true);}
+}
+function deleteTrader(){deleteTraderById(editingTrader)}
+async function deleteTraderById(id){
+  if(!confirm('Delete this trader and all their trade histories?'))return;
+  try{
+    await apiFetch('/traders/'+id,{method:'DELETE'});
+    TRADERS=TRADERS.filter(x=>x._id!==id);
+    toast('Trader deleted');closeTraderModal();closeTradeHistory();renderTraderCards();
+  }catch(e){toast('Delete failed: '+e.message,true);}
+}
+
+// Connect modal
+function openConnectModal(traderId){
+  const t=TRADERS.find(x=>x._id===traderId);if(!t)return;
+  document.getElementById('connect-trader-id').value=traderId;
+  const sel=document.getElementById('connect-user-select');
+  const notConnected=USERS.filter(u=>!(t.connections||[]).includes(u._id));
+  sel.innerHTML=notConnected.length?notConnected.map(u=>`<option value="${u._id}">${u.name} (${u.email})</option>`).join(''):`<option value="">All users connected</option>`;
+  renderConnectedUsers(t);
+  document.getElementById('connect-modal').classList.add('open');
+}
+function closeConnectModal(){document.getElementById('connect-modal').classList.remove('open')}
+function renderConnectedUsers(t){
+  const el=document.getElementById('connected-users-list');
+  if(!(t.connections||[]).length){el.innerHTML='<div style="font-size:12px;color:var(--tx3)">No users connected yet</div>';return}
+  el.innerHTML=t.connections.map(uid=>{
+    const u=USERS.find(x=>x._id===uid);if(!u)return'';
+    return`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+      <div class="uc"><div class="av av1">${initials(u.name)}</div>${u.name}</div>
+      <div style="display:flex;gap:5px">
+        <button class="btn btn-sm" onclick="viewHistory('${t._id}','${uid}')">History</button>
+        <button class="btn btn-sm btn-d" onclick="disconnectUser('${t._id}','${uid}')">Remove</button>
+      </div>
+    </div>`}).join('');
+}
+async function connectUser(){
+  const tid=document.getElementById('connect-trader-id').value;
+  const uid=document.getElementById('connect-user-select').value;
+  if(!uid){toast('Select a user',true);return}
+  try{
+    await apiFetch('/traders/'+tid+'/connect',{method:'POST',body:JSON.stringify({userId:uid})});
+    const t=TRADERS.find(x=>x._id===tid);
+    if(t&&!t.connections.includes(uid)){t.connections.push(uid);t.histories=t.histories||{};t.histories[uid]=t.histories[uid]||[];}
+    toast('User connected');
+    openConnectModal(tid);renderTraderCards();
+  }catch(e){toast('Failed: '+e.message,true);}
+}
+async function disconnectUser(tid,uid){
+  try{
+    await apiFetch('/traders/'+tid+'/connect/'+uid,{method:'DELETE'}).catch(()=>
+      apiFetch('/traders/'+tid+'/disconnect',{method:'POST',body:JSON.stringify({userId:uid})}));
+    const t=TRADERS.find(x=>x._id===tid);
+    if(t)t.connections=t.connections.filter(x=>x!==uid);
+    toast('User disconnected');renderConnectedUsers(TRADERS.find(x=>x._id===tid));renderTraderCards();
+  }catch(e){
+    // fallback: update locally if API doesn't have a disconnect endpoint
+    const t=TRADERS.find(x=>x._id===tid);
+    if(t)t.connections=t.connections.filter(x=>x!==uid);
+    toast('User disconnected');renderConnectedUsers(t);renderTraderCards();
+  }
+}
+
+// Trade history
+async function viewHistory(tid,uid){
+  activeTrader=tid;activeUserId=uid;
+  const t=TRADERS.find(x=>x._id===tid);
+  const u=USERS.find(x=>x._id===uid);
+  document.getElementById('th-trader-name').textContent=t?t.name:'';
+  document.getElementById('th-user-name').textContent=u?u.name+' ('+u.email+')':'';
+  // fetch from API
+  try{
+    const data=await apiFetch('/traders/'+tid+'/history/'+uid);
+    if(t){t.histories=t.histories||{};t.histories[uid]=Array.isArray(data)?data:(data.history||data.trades||[]);}
+  }catch(e){if(t){t.histories=t.histories||{};t.histories[uid]=t.histories[uid]||[];}}
+  renderTradeHistory();
+  closeConnectModal();
+  const p=document.getElementById('trade-history-panel');p.style.display='block';
+  p.scrollIntoView({behavior:'smooth'});
+}
+function closeTradeHistory(){document.getElementById('trade-history-panel').style.display='none';activeTrader=null;activeUserId=null}
+function renderTradeHistory(){
+  const t=TRADERS.find(x=>x._id===activeTrader);if(!t)return;
+  const trades=(t.histories&&t.histories[activeUserId])||[];
+  const tb=document.getElementById('trade-history-table');
+  tb.innerHTML=trades.length?trades.map(tr=>`<tr>
+    <td style="font-weight:600">${tr.pair||'—'}</td>
+    <td><span class="tag ${tr.type==='buy'?'bs':'bd'}">${(tr.type||'').toUpperCase()}</span></td>
+    <td>${fmtUSD(tr.amount)}</td>
+    <td class="${(tr.profit||0)>=0?'profit-pos':'profit-neg'}">${(tr.profit||0)>=0?'+':''}${fmtUSD(tr.profit)}</td>
+    <td><span class="tag ${tr.status==='open'?'bi':tr.status==='pending'?'bw':'bx'}">${tr.status||'—'}</span></td>
+    <td style="font-size:11px;color:var(--tx3)">${fmtDate(tr.openedAt||tr.createdAt)}</td>
+    <td><button class="btn btn-sm btn-d" onclick="deleteTrade('${tr._id}')">Remove</button></td>
+  </tr>`).join(''):`<tr><td colspan="7" class="empty">No trades yet for this user</td></tr>`;
+}
+async function deleteTrade(tradeId){
+  try{
+    await apiFetch('/traders/'+activeTrader+'/history/'+activeUserId+'/'+tradeId,{method:'DELETE'}).catch(()=>
+      apiFetch('/traders/'+activeTrader+'/history/'+tradeId,{method:'DELETE'}));
+  }catch(e){}
+  // update locally regardless
+  const t=TRADERS.find(x=>x._id===activeTrader);
+  if(t&&t.histories&&t.histories[activeUserId])
+    t.histories[activeUserId]=t.histories[activeUserId].filter(x=>x._id!==tradeId);
+  toast('Trade removed');renderTradeHistory();
+}
+function openAddTradeModal(){
+  ['at-pair','at-amount','at-profit','at-note'].forEach(f=>document.getElementById(f).value='');
+  document.getElementById('at-type').value='buy';
+  document.getElementById('at-status').value='closed';
+  document.getElementById('at-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('add-trade-modal').classList.add('open');
+}
+function closeAddTradeModal(){document.getElementById('add-trade-modal').classList.remove('open')}
+async function submitTrade(){
+  const pair=document.getElementById('at-pair').value.trim();
+  const amount=parseFloat(document.getElementById('at-amount').value);
+  if(!pair||!amount){toast('Pair and amount required',true);return}
+  const payload={pair,type:document.getElementById('at-type').value,amount,profit:parseFloat(document.getElementById('at-profit').value)||0,status:document.getElementById('at-status').value,openedAt:document.getElementById('at-date').value,note:document.getElementById('at-note').value};
+  try{
+    const res=await apiFetch('/traders/'+activeTrader+'/history/'+activeUserId,{method:'POST',body:JSON.stringify(payload)});
+    const t=TRADERS.find(x=>x._id===activeTrader);
+    if(t){t.histories=t.histories||{};t.histories[activeUserId]=t.histories[activeUserId]||[];t.histories[activeUserId].unshift({...payload,_id:res._id||res.id||'th'+Date.now()});}
+    toast('Trade added');closeAddTradeModal();renderTradeHistory();
+  }catch(e){toast('Failed: '+e.message,true);}
+}
+
+// ══ WALLETS ══
+async function renderWallets(){
+  document.getElementById('wallets-list').innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const data=await apiFetch('/admin/wallets');
+    WALLETS=Array.isArray(data)?data:(data.wallets||data.data||[]);
+    renderWalletsList();
+  }catch(e){document.getElementById('wallets-list').innerHTML=`<div class="empty">Error: ${e.message}</div>`;}
+}
+function renderWalletsList(){
+  document.getElementById('wallets-list').innerHTML=WALLETS.map((w,i)=>`
+    <div style="display:grid;grid-template-columns:160px 1fr auto;gap:8px;align-items:end;margin-bottom:8px">
+      <div class="fg"><label class="fl">Coin / Network</label><input type="text" id="wc-${i}" value="${w.coin||w.name||''}"></div>
+      <div class="fg"><label class="fl">Wallet address</label><input type="text" id="wa-${i}" value="${w.address||''}" class="mono"></div>
+      <button class="btn btn-sm btn-d" style="margin-bottom:0;height:34px" onclick="removeWallet(${i})">Remove</button>
+    </div>`).join('')||'<div class="empty">No wallets. Add one above.</div>';
+}
+function addWallet(){WALLETS.push({coin:'',address:'',network:''});renderWalletsList();setTimeout(()=>{const el=document.getElementById('wc-'+(WALLETS.length-1));if(el)el.focus()},40)}
+function removeWallet(i){if(!confirm('Remove wallet?'))return;WALLETS.splice(i,1);renderWalletsList()}
+async function saveWallets(){
+  WALLETS.forEach((w,i)=>{const c=document.getElementById('wc-'+i),a=document.getElementById('wa-'+i);if(c)w.coin=c.value;if(a)w.address=a.value;});
+  try{
+    await apiFetch('/admin/wallets',{method:'PUT',body:JSON.stringify({wallets:WALLETS})}).catch(()=>
+      apiFetch('/admin/wallets',{method:'POST',body:JSON.stringify({wallets:WALLETS})}));
+    toast('Wallets saved');
+  }catch(e){toast('Save failed: '+e.message,true);}
+}
+
+// ══ PLANS ══
+async function renderPlans(){
+  document.getElementById('plans-list').innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const data=await apiFetch('/admin/plans');
+    PLANS=Array.isArray(data)?data:(data.plans||data.data||[]);
+    // normalise id field — API may return _id or id
+    PLANS=PLANS.map(p=>({...p,id:p.id||p._id}));
+    renderPlansList();
+  }catch(e){document.getElementById('plans-list').innerHTML=`<div class="empty">Error: ${e.message}</div>`;}
+}
+function renderPlansList(){
+  const el=document.getElementById('plans-list');
+  el.innerHTML=PLANS.length?PLANS.map(p=>`
+    <div style="border:1px solid var(--border);border-radius:var(--r);padding:.9rem;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
+        <div><div style="font-weight:700;font-size:14px">${p.name}</div><div style="font-size:11px;color:var(--tx3);margin-top:2px">${p.desc||p.description||''}</div></div>
+        <div style="display:flex;gap:6px;align-items:center"><span class="tag ${p.status==='active'?'bs':'bw'}">${p.status}</span><button class="btn btn-sm" onclick="editPlan('${p.id}')">Edit</button></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding-top:8px;border-top:1px solid var(--border)">
+        <div><div style="font-size:10px;color:var(--tx3);font-weight:700;text-transform:uppercase">ROI</div><div style="font-weight:700">${p.roi}%</div></div>
+        <div><div style="font-size:10px;color:var(--tx3);font-weight:700;text-transform:uppercase">Min</div><div style="font-weight:700">$${Number(p.min||p.minDeposit||0).toLocaleString()}</div></div>
+        <div><div style="font-size:10px;color:var(--tx3);font-weight:700;text-transform:uppercase">Max</div><div style="font-weight:700">$${Number(p.max||p.maxDeposit||0).toLocaleString()}</div></div>
+        <div><div style="font-size:10px;color:var(--tx3);font-weight:700;text-transform:uppercase">Duration</div><div style="font-weight:700">${p.duration}d</div></div>
+        <div><div style="font-size:10px;color:var(--tx3);font-weight:700;text-transform:uppercase">Payout</div><div style="font-weight:700">${p.payout||p.payoutFrequency||'—'}</div></div>
+      </div>
+    </div>`).join(''):'<div class="empty">No plans yet</div>';
+}
+function showPlanForm(){
+  editPlanId=null;document.getElementById('plan-form-title').textContent='New plan';
+  document.getElementById('delete-plan-btn').style.display='none';
+  ['pf-name','pf-roi','pf-min','pf-max','pf-duration','pf-ref','pf-desc'].forEach(f=>document.getElementById(f).value='');
+  document.getElementById('pf-status').value='active';document.getElementById('pf-payout').value='Daily';document.getElementById('pf-id').value='';
+  document.getElementById('plan-form-card').style.display='block';
+  document.getElementById('plan-form-card').scrollIntoView({behavior:'smooth'});
+}
+function hidePlanForm(){document.getElementById('plan-form-card').style.display='none';editPlanId=null}
+function editPlan(id){
+  const p=PLANS.find(x=>x.id===id);if(!p)return;editPlanId=id;
+  document.getElementById('plan-form-title').textContent='Edit plan';
+  document.getElementById('delete-plan-btn').style.display='inline-flex';
+  document.getElementById('pf-name').value=p.name;
+  document.getElementById('pf-roi').value=p.roi;
+  document.getElementById('pf-min').value=p.min||p.minDeposit||'';
+  document.getElementById('pf-max').value=p.max||p.maxDeposit||'';
+  document.getElementById('pf-duration').value=p.duration;
+  document.getElementById('pf-desc').value=p.desc||p.description||'';
+  document.getElementById('pf-status').value=p.status;
+  document.getElementById('pf-payout').value=p.payout||p.payoutFrequency||'Daily';
+  document.getElementById('pf-ref').value=p.refBonus||0;
+  document.getElementById('pf-id').value=id;
+  document.getElementById('plan-form-card').style.display='block';
+  document.getElementById('plan-form-card').scrollIntoView({behavior:'smooth'});
+}
+async function savePlan(){
+  const name=document.getElementById('pf-name').value.trim();
+  const roi=parseFloat(document.getElementById('pf-roi').value);
+  const min=parseFloat(document.getElementById('pf-min').value);
+  const max=parseFloat(document.getElementById('pf-max').value);
+  const dur=parseInt(document.getElementById('pf-duration').value);
+  if(!name||isNaN(roi)||isNaN(min)||isNaN(max)||isNaN(dur)){toast('Fill required fields',true);return}
+  if(min>=max){toast('Max must exceed min',true);return}
+  const payload={name,roi,min,max,duration:dur,desc:document.getElementById('pf-desc').value,description:document.getElementById('pf-desc').value,status:document.getElementById('pf-status').value,payout:document.getElementById('pf-payout').value,payoutFrequency:document.getElementById('pf-payout').value,refBonus:parseFloat(document.getElementById('pf-ref').value)||0};
+  try{
+    if(editPlanId){
+      await apiFetch('/admin/plans/'+editPlanId,{method:'PUT',body:JSON.stringify(payload)});
+      Object.assign(PLANS.find(x=>x.id===editPlanId),payload);
+      toast('Plan updated');
+    } else {
+      const res=await apiFetch('/admin/plans',{method:'POST',body:JSON.stringify(payload)});
+      PLANS.push({...payload,id:res.id||res._id||'p'+Date.now()});
+      toast('Plan created');
+    }
+    hidePlanForm();renderPlansList();
+  }catch(e){toast('Save failed: '+e.message,true);}
+}
+async function deletePlan(){
+  if(!confirm('Delete plan?'))return;
+  try{
+    await apiFetch('/admin/plans/'+editPlanId,{method:'DELETE'});
+    PLANS=PLANS.filter(x=>x.id!==editPlanId);
+    toast('Plan deleted');hidePlanForm();renderPlansList();
+  }catch(e){toast('Delete failed: '+e.message,true);}
+}
+
+// ══ AUTH (live API) ══
+async function doAdminLogin(){
+  const e=document.getElementById('login-email').value,p=document.getElementById('login-pass').value;
+  if(!e||!p){toast('Enter email and password',true);return}
+  try{
+    const res=await fetch(API+'/auth/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e,password:p})});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.message||'Login failed');
+    TOKEN=data.token||data.accessToken||data.jwt;
+    if(TOKEN) localStorage.setItem('admin_token',TOKEN);
+    toast('Logged in as admin ✓');
+    initApp();
+  }catch(err){toast(err.message,true);}
+}
+async function doUserLogin(){
+  const e=document.getElementById('ulogin-email').value,p=document.getElementById('ulogin-pass').value;
+  if(!e||!p){toast('Enter email and password',true);return}
+  try{
+    const res=await fetch(API+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e,password:p})});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.message||'Login failed');
+    toast('User login successful — token: '+(data.token||data.accessToken||'received'));
+  }catch(err){toast(err.message,true);}
+}
+
+// ══ INIT ══
+async function initApp(){
+  // Load all data in parallel; each render function is independently guarded
+  await Promise.allSettled([
+    renderUsers(),
+    renderKYC(),
+    renderDeposits(),
+    renderWithdrawals(),
+    renderTraders(),
+    renderWallets(),
+    renderPlans(),
+  ]);
+  renderDash();
+  renderProfitPage();
+  updateBadges();
+}
+
+initApp();
+</script>
+</body>
+</html>
