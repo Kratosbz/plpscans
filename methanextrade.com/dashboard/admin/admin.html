@@ -1090,26 +1090,36 @@ async function deleteTraderById(id){
 }
 
 // Connect modal
-function openConnectModal(traderId){
+async function openConnectModal(traderId){
   const t=TRADERS.find(x=>x._id===traderId);if(!t)return;
   document.getElementById('connect-trader-id').value=traderId;
+  document.getElementById('connect-modal').classList.add('open');
+  document.getElementById('connected-users-list').innerHTML='<div style="font-size:12px;color:var(--tx3)">Loading…</div>';
+  try{
+    const res=await apiFetch('/traders/'+traderId+'/connections');
+    const conns=Array.isArray(res)?res:(res.data||res.connections||[]);
+    // conns is array of UserTrader docs; userId may be populated object or plain id string
+    t.connections=conns.map(c=>typeof c.userId==='object'?c.userId._id||c.userId.id:c.userId);
+  }catch(e){t.connections=t.connections||[];}
   const sel=document.getElementById('connect-user-select');
-  const notConnected=USERS.filter(u=>!(t.connections||[]).includes(u._id));
+  const notConnected=USERS.filter(u=>!(t.connections||[]).map(String).includes(String(u._id)));
   sel.innerHTML=notConnected.length?notConnected.map(u=>`<option value="${u._id}">${u.name} (${u.email})</option>`).join(''):`<option value="">All users connected</option>`;
   renderConnectedUsers(t);
-  document.getElementById('connect-modal').classList.add('open');
 }
 function closeConnectModal(){document.getElementById('connect-modal').classList.remove('open')}
 function renderConnectedUsers(t){
   const el=document.getElementById('connected-users-list');
   if(!(t.connections||[]).length){el.innerHTML='<div style="font-size:12px;color:var(--tx3)">No users connected yet</div>';return}
   el.innerHTML=t.connections.map(uid=>{
-    const u=USERS.find(x=>x._id===uid);if(!u)return'';
+    const uidStr=String(uid);
+    const u=USERS.find(x=>String(x._id)===uidStr);
+    const displayName=u?u.name:uidStr;
+    const displayInit=u?initials(u.name):'?';
     return`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
-      <div class="uc"><div class="av av1">${initials(u.name)}</div>${u.name}</div>
+      <div class="uc"><div class="av av1">${displayInit}</div>${displayName}</div>
       <div style="display:flex;gap:5px">
-        <button class="btn btn-sm" onclick="viewHistory('${t._id}','${uid}')">History</button>
-        <button class="btn btn-sm btn-d" onclick="disconnectUser('${t._id}','${uid}')">Remove</button>
+        <button class="btn btn-sm" onclick="viewHistory('${t._id}','${uidStr}')">History</button>
+        <button class="btn btn-sm btn-d" onclick="disconnectUser('${t._id}','${uidStr}')">Remove</button>
       </div>
     </div>`}).join('');
 }
