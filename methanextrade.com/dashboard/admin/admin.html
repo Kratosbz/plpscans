@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Admin Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>  
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -489,6 +490,18 @@ textarea{resize:vertical;min-height:68px}
       <div class="fg"><label class="fl">Profit Rate</label><input id="tm-profit" type="text" placeholder="87.5%"></div>
       <div class="fg"><label class="fl">Status</label><select id="tm-status"><option value="online">Online</option><option value="offline">Offline</option></select></div>
     </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Risk Score</label><input id="tm-risk" type="text" placeholder="Low / Medium / High"></div>
+      <div class="fg"><label class="fl">Country / Frequency</label><input id="tm-frequency" type="text" placeholder="USA / Daily"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Strategy</label><input id="tm-strategy" type="number" placeholder="Confidence % e.g. 92"></div>
+      <div class="fg"><label class="fl">Min Limit ($)</label><input id="tm-minLimit" type="number" placeholder="500"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Max Limit ($)</label><input id="tm-maxLimit" type="number" placeholder="50000"></div>
+      <div class="fg"><label class="fl">Interest / ROI (%)</label><input id="tm-interest" type="number" placeholder="12"></div>
+    </div>
     <div class="fg" style="margin-bottom:14px"><label class="fl">Bio</label><textarea id="tm-bio" placeholder="Short trader biography…"></textarea></div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-p" onclick="saveTrader()">&#10003; Save</button>
@@ -717,40 +730,176 @@ async function setKYC(id,s){
 
 // ══ DEPOSITS ══
 async function renderDeposits(){
-  document.getElementById('dep-table').innerHTML='<tr><td colspan="7" class="empty">Loading…</td></tr>';
-  try{
-    const data=await apiFetch('/deposits');
-    DEPOSITS=Array.isArray(data)?data:(data.deposits||data.data||[]);
-    DEPOSITS=DEPOSITS.map(d=>({...d,userName:d.userName||d.user?.name||(d.user?.firstName+' '+d.user?.lastName)||d.user?.email||'Unknown',createdAt:d.createdAt||d.date}));
-    renderDepTable();updateBadges();
-  }catch(e){document.getElementById('dep-table').innerHTML=`<tr><td colspan="7" class="empty">Error: ${e.message}</td></tr>`;}
+  document.getElementById('dep-table').innerHTML =
+    '<tr><td colspan="7" class="empty">Loading…</td></tr>';
+console.log("here");
+
+  try {
+    const response = await $.ajax({
+      type: "GET",
+      url: "https://scottlsh-render.onrender.com/users",
+      dataType: "json",
+      timeout: 30000
+    });
+
+    const users = response.data || [];
+console.log(users);
+
+    // 🔥 Flatten like your inspo (users → transactions)
+    DEPOSITS = [];
+
+    users.forEach(user => {
+      const trans = user.transactions || [];
+
+      trans.forEach(t => {
+         // optional filter if needed
+          DEPOSITS.push({
+            _id: t._id,
+            userId: user._id,
+            userName:
+              user.firstName + ' ' + user.lastName ||
+              user.email ||
+              'Unknown',
+            amount: t.amount,
+            method: t.method,
+            status: t.status,
+            txHash: t.txHash,
+            createdAt: t.createdAt
+          });
+        
+      });
+    });
+
+    renderDepTable();
+    updateBadges();
+
+  } catch (e) {
+  console.error("DEPOSITS ERROR:", e);
+
+  document.getElementById('dep-table').innerHTML =
+    `<tr><td colspan="7" class="empty">Error: ${e.responseJSON?.error || e.message}</td></tr>`;
 }
-function renderDepTable(){
-  const list=depFilter==='all'?DEPOSITS:DEPOSITS.filter(d=>d.status===depFilter);
-  const tb=document.getElementById('dep-table');
-  tb.innerHTML=list.length?list.map((d,i)=>{
-    const c=d.status==='approved'?'bs':d.status==='declined'?'bd':'bw';
-    return`<tr>
-      <td><div class="uc"><div class="av ${av(i)}">${initials(d.userName)}</div>${d.userName}</div></td>
-      <td style="font-weight:700">${fmtUSD(d.amount)}</td>
-      <td>${d.method||'—'}</td>
-      <td class="mono" style="max-width:100px;overflow:hidden;text-overflow:ellipsis">${d.txHash||'—'}</td>
-      <td style="font-size:11px;color:var(--tx3)">${fmtDate(d.createdAt)}</td>
-      <td><span class="tag ${c}">${d.status}</span></td>
-      <td><div style="display:flex;gap:5px">
-        ${d.status==='pending'?`<button class="btn btn-sm btn-s" onclick="setDep('${d._id}','approved')">Approve</button><button class="btn btn-sm btn-d" onclick="setDep('${d._id}','declined')">Decline</button>`:''}
-      </div></td>
-    </tr>`}).join(''):`<tr><td colspan="7" class="empty">No records</td></tr>`;
-}
-function depTab(f,el){depFilter=f;document.querySelectorAll('#page-deposits .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderDepTable()}
-async function setDep(id,s){
-  try{
-    await apiFetch('/deposits/'+id+'/status',{method:'PUT',body:JSON.stringify({status:s})});
-    const d=DEPOSITS.find(x=>x._id===id);if(d)d.status=s;
-    toast('Deposit '+s);renderDepTable();updateBadges();renderDash();
-  }catch(e){toast('Failed: '+e.message,true);}
 }
 
+function renderDepTable(){
+  const list = depFilter === 'all'
+    ? DEPOSITS
+    : DEPOSITS.filter(d => d.status === depFilter);
+
+  const tb = document.getElementById('dep-table');
+
+  tb.innerHTML = list.length ? list.map((d,i)=>{
+
+    const c = d.status === 'approved' ? 'bs'
+            : d.status === 'declined' ? 'bd'
+            : 'bw';
+
+    // 🔥 INSPO STYLE (encode details)
+    const detail = {
+      userid: d.userId,
+      transacId: d._id,
+      amount: d.amount
+    };
+
+    const details = encodeURIComponent(JSON.stringify(detail));
+
+    return `<tr>
+      <td>
+        <div class="uc">
+          <div class="av ${av(i)}">${initials(d.userName)}</div>
+          ${d.userName}
+        </div>
+      </td>
+      <td style="font-weight:700">${fmtUSD(d.amount)}</td>
+      <td>${d.method || '—'}</td>
+      <td class="mono">${d.txHash || '—'}</td>
+      <td style="font-size:11px;color:var(--tx3)">
+        ${fmtDate(d.createdAt)}
+      </td>
+      <td><span class="tag ${c}">${d.status}</span></td>
+      <td>
+        <div style="display:flex;gap:5px">
+          ${
+            d.status === 'pending'
+              ? `<button class="btn btn-sm btn-s"
+                    onclick="approveDeposit('${details}')">Approve</button>
+                 <button class="btn btn-sm btn-d"
+                    onclick="declineDeposit('${details}')">Decline</button>`
+              : ''
+          }
+        </div>
+      </td>
+    </tr>`;
+
+  }).join('')
+  : `<tr><td colspan="7" class="empty">No records</td></tr>`;
+}
+
+async function approveDeposit(details){
+
+  let amount = prompt("Enter deposit amount:");
+  if (amount === null) return;
+
+  const parsed = JSON.parse(decodeURIComponent(details));
+
+  const userId = parsed.userid;
+  const transactionId = parsed.transacId;
+
+  try {
+    await $.ajax({
+      type: "PUT",
+      url: `https://scottlsh-render.onrender.com/transactions/${userId}/transactions/${transactionId}/confirm`,
+      dataType: "json",
+      data: { amount },
+      timeout: 30000,
+
+      success: function () {
+        alert("Deposit Approved");
+
+        // 🔥 Update UI instantly
+        const d = DEPOSITS.find(x => x._id === transactionId);
+        if (d) d.status = 'approved';
+
+        renderDepTable();
+        updateBadges();
+      }
+    });
+
+  } catch (e) {
+    alert("Approval failed");
+  }
+}
+
+async function declineDeposit(details){
+
+  const parsed = JSON.parse(decodeURIComponent(details));
+
+  const userId = parsed.userid;
+  const transactionId = parsed.transacId;
+
+  try {
+    await $.ajax({
+      type: "PUT",
+      url: `https://scottlsh-render.onrender.com/transactions/${userId}/transactions/${transactionId}/decline`,
+      dataType: "json",
+      timeout: 30000,
+
+      success: function () {
+        alert("Deposit Declined");
+
+        // 🔥 Update UI instantly
+        const d = DEPOSITS.find(x => x._id === transactionId);
+        if (d) d.status = 'declined';
+
+        renderDepTable();
+        updateBadges();
+      }
+    });
+
+  } catch (e) {
+    alert("Decline failed");
+  }
+}
 // ══ WITHDRAWALS ══
 async function renderWithdrawals(){
   document.getElementById('wd-table').innerHTML='<tr><td colspan="7" class="empty">Loading…</td></tr>';
@@ -898,9 +1047,15 @@ function openTraderModal(id){
     document.getElementById('tm-profit').value=t.profit||'';
     document.getElementById('tm-status').value=t.status||'online';
     document.getElementById('tm-bio').value=t.bio||'';
+    document.getElementById('tm-risk').value=t.risk||'';
+    document.getElementById('tm-frequency').value=t.frequency||'';
+    document.getElementById('tm-strategy').value=t.strategy||'';
+    document.getElementById('tm-minLimit').value=t.minLimit||'';
+    document.getElementById('tm-maxLimit').value=t.maxLimit||'';
+    document.getElementById('tm-interest').value=t.interest||'';
     document.getElementById('tm-id').value=id;
   } else {
-    ['tm-name','tm-photo','tm-signal','tm-drawdown','tm-profit','tm-bio'].forEach(f=>document.getElementById(f).value='');
+    ['tm-name','tm-photo','tm-signal','tm-drawdown','tm-profit','tm-bio','tm-risk','tm-frequency','tm-strategy','tm-minLimit','tm-maxLimit','tm-interest'].forEach(f=>document.getElementById(f).value='');
     document.getElementById('tm-status').value='online';
     document.getElementById('tm-id').value='';
   }
@@ -910,7 +1065,7 @@ function closeTraderModal(){document.getElementById('trader-modal').classList.re
 async function saveTrader(){
   const name=document.getElementById('tm-name').value.trim();
   if(!name){toast('Name is required',true);return}
-  const data={name,photo:document.getElementById('tm-photo').value,signal:parseInt(document.getElementById('tm-signal').value)||0,drawdown:parseInt(document.getElementById('tm-drawdown').value)||0,profit:document.getElementById('tm-profit').value||'0%',status:document.getElementById('tm-status').value,bio:document.getElementById('tm-bio').value};
+  const data={name,photo:document.getElementById('tm-photo').value,signal:parseInt(document.getElementById('tm-signal').value)||0,drawdown:parseInt(document.getElementById('tm-drawdown').value)||0,profit:document.getElementById('tm-profit').value||'0%',status:document.getElementById('tm-status').value,bio:document.getElementById('tm-bio').value,risk:document.getElementById('tm-risk').value,frequency:document.getElementById('tm-frequency').value,strategy:parseFloat(document.getElementById('tm-strategy').value)||0,minLimit:parseFloat(document.getElementById('tm-minLimit').value)||0,maxLimit:parseFloat(document.getElementById('tm-maxLimit').value)||0,interest:parseFloat(document.getElementById('tm-interest').value)||0};
   try{
     if(editingTrader){
       await apiFetch('/traders/'+editingTrader,{method:'PUT',body:JSON.stringify(data)});
@@ -1069,6 +1224,8 @@ function renderWalletsList(){
 function addWallet(){WALLETS.push({coin:'',address:'',network:''});renderWalletsList();setTimeout(()=>{const el=document.getElementById('wc-'+(WALLETS.length-1));if(el)el.focus()},40)}
 function removeWallet(i){if(!confirm('Remove wallet?'))return;WALLETS.splice(i,1);renderWalletsList()}
 async function saveWallets(){
+console.log(WALLETS);
+
   WALLETS.forEach((w,i)=>{const c=document.getElementById('wc-'+i),a=document.getElementById('wa-'+i);if(c)w.coin=c.value;if(a)w.address=a.value;});
   try{
     await apiFetch('/admin/wallets',{method:'PUT',body:JSON.stringify({wallets:WALLETS})}).catch(()=>
@@ -1139,7 +1296,17 @@ async function savePlan(){
   const dur=parseInt(document.getElementById('pf-duration').value);
   if(!name||isNaN(roi)||isNaN(min)||isNaN(max)||isNaN(dur)){toast('Fill required fields',true);return}
   if(min>=max){toast('Max must exceed min',true);return}
-  const payload={name,roi,min,max,duration:dur,desc:document.getElementById('pf-desc').value,description:document.getElementById('pf-desc').value,status:document.getElementById('pf-status').value,payout:document.getElementById('pf-payout').value,payoutFrequency:document.getElementById('pf-payout').value,refBonus:parseFloat(document.getElementById('pf-ref').value)||0};
+  const payload = {
+  name,
+  roi,
+  minDeposit: min,
+  maxDeposit: max,
+  duration: dur,
+  description: document.getElementById('pf-desc').value,
+  status: document.getElementById('pf-status').value,
+  payout: document.getElementById('pf-payout').value,
+  refBonus: parseFloat(document.getElementById('pf-ref').value) || 0
+};
   try{
     if(editPlanId){
       await apiFetch('/admin/plans/'+editPlanId,{method:'PUT',body:JSON.stringify(payload)});
@@ -1147,7 +1314,10 @@ async function savePlan(){
       toast('Plan updated');
     } else {
       const res=await apiFetch('/admin/plans',{method:'POST',body:JSON.stringify(payload)});
-      PLANS.push({...payload,id:res.id||res._id||'p'+Date.now()});
+      PLANS.push({
+  ...payload,
+  id: res.data?._id
+});
       toast('Plan created');
     }
     hidePlanForm();renderPlansList();

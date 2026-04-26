@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Investment Plans</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <style>
+    .plans-section {
+      padding: 2rem 1.25rem;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+    .plans-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.75rem;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .plans-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .plans-header-icon {
+      width: 42px; height: 42px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #1a237e, #3a64d1);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 17px; flex-shrink: 0;
+    }
+    .plans-header-title {
+      font-size: 20px; font-weight: 700; color: #1a1a2e; margin: 0; line-height: 1.2;
+    }
+    .plans-header-sub { font-size: 12px; color: #888; margin-top: 2px; }
+    .plans-balance-badge {
+      display: flex; align-items: center; gap: 8px;
+      background: linear-gradient(135deg, #f0f4ff, #e8eeff);
+      border: 1px solid #c5d3ff; border-radius: 99px;
+      padding: 6px 16px; font-size: 13px; font-weight: 600; color: #3a64d1;
+    }
+
+    /* GRID: 3 cols desktop → 1 col mobile */
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 992px) { .plans-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .plans-grid { grid-template-columns: 1fr; gap: 14px; } }
+
+    /* STATES */
+    .plans-spinner {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 12px; padding: 3rem; color: #aaa; font-size: 13px; grid-column: 1/-1;
+    }
+    .plans-spinner i { font-size: 28px; color: #3a64d1; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .plans-empty { text-align: center; padding: 3rem; color: #bbb; font-size: 13px; grid-column: 1/-1; }
+    .plans-empty i { font-size: 36px; display: block; margin-bottom: 12px; }
+    .plans-error { text-align: center; padding: 3rem; color: #dc3545; font-size: 13px; grid-column: 1/-1; }
+    .plans-error i { font-size: 32px; display: block; margin-bottom: 10px; }
+
+    /* CARD */
+    .plan-card {
+      border-radius: 16px; overflow: hidden;
+      border: 1px solid #e8eaf0; background: #fff;
+      display: flex; flex-direction: column;
+      box-shadow: 0 2px 12px rgba(58,100,209,.06);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .plan-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(58,100,209,.14);
+    }
+
+    /* CARD HEADER */
+    .pc-header {
+      background: linear-gradient(135deg, #1a237e 0%, #3a64d1 100%);
+      padding: 1.1rem 1.1rem .9rem;
+      position: relative; overflow: hidden;
+    }
+    .pc-header::before {
+      content: '';
+      position: absolute; right: -28px; top: -28px;
+      width: 100px; height: 100px; border-radius: 50%;
+      background: rgba(255,255,255,.07);
+    }
+    .pc-header::after {
+      content: '';
+      position: absolute; left: -18px; bottom: -30px;
+      width: 80px; height: 80px; border-radius: 50%;
+      background: rgba(255,255,255,.04);
+    }
+    .pc-header-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 10px; position: relative; z-index: 1;
+    }
+    .pc-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: rgba(255,255,255,.18);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 16px; flex-shrink: 0;
+    }
+    .pc-status {
+      font-size: 9px; font-weight: 700; letter-spacing: .07em;
+      text-transform: uppercase; padding: 3px 10px; border-radius: 99px;
+      color: #fff; display: flex; align-items: center; gap: 4px;
+    }
+    .pc-status.active  { background: rgba(40,167,69,.4);  border: 1px solid rgba(40,167,69,.6); }
+    .pc-status.inactive{ background: rgba(0,0,0,.25);      border: 1px solid rgba(255,255,255,.2); }
+    .pc-name {
+      font-size: 17px; font-weight: 700; color: #fff; line-height: 1.2;
+      position: relative; z-index: 1;
+    }
+    .pc-desc {
+      font-size: 11px; color: rgba(255,255,255,.7);
+      margin-top: 3px; line-height: 1.4; position: relative; z-index: 1;
+    }
+    .pc-roi {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 10px;
+      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+      border-radius: 99px; padding: 4px 12px;
+      color: #fff; font-size: 12px; font-weight: 700;
+      position: relative; z-index: 1;
+    }
+    .pc-roi .roi-val { font-size: 16px; font-weight: 800; }
+
+    /* CARD BODY */
+    .pc-body {
+      padding: 1rem 1.1rem; flex: 1;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+
+    /* STATS 2×2 */
+    .pc-stats {
+      display: grid; grid-template-columns: repeat(2,1fr); gap: 8px;
+    }
+    .pc-stat {
+      background: #f7f8fc; border-radius: 10px;
+      padding: 9px 10px; display: flex; align-items: center; gap: 8px;
+    }
+    .pc-stat-icon {
+      width: 30px; height: 30px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; flex-shrink: 0;
+    }
+    .ic-blue   { background:#e8eeff; color:#3a64d1; }
+    .ic-green  { background:#eafaf1; color:#28a745; }
+    .ic-orange { background:#fff3e0; color:#f57c00; }
+    .ic-purple { background:#f3e5f5; color:#8e24aa; }
+    .pc-stat-label {
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing:.05em; color:#aaa; margin-bottom:1px;
+    }
+    .pc-stat-value { font-size:13px; font-weight:700; color:#1a1a2e; line-height:1.1; }
+
+    /* BALANCE ROW */
+    .pc-balance {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 12px; border-radius: 10px; font-size: 12px; gap: 8px;
+    }
+    .pc-balance.ok  { background:#eafaf1; border:1px solid #c3e6cb; }
+    .pc-balance.low { background:#fff5f5; border:1px solid #f5c6cb; }
+    .pc-bal-left { display:flex; align-items:center; gap:6px; color:#555; font-weight:500; }
+    .pc-balance.ok  .pc-bal-left i { color:#28a745; }
+    .pc-balance.low .pc-bal-left i { color:#dc3545; }
+    .pc-bal-val { font-weight:700; }
+    .pc-balance.ok  .pc-bal-val { color:#28a745; }
+    .pc-balance.low .pc-bal-val { color:#dc3545; }
+    .pc-bal-right { font-size:11px; font-weight:600; white-space:nowrap; }
+    .pc-balance.ok  .pc-bal-right { color:#28a745; }
+    .pc-balance.low .pc-bal-right { color:#dc3545; }
+
+    /* FOOTER */
+    .pc-footer {
+      padding: .9rem 1.1rem;
+      border-top: 1px solid #f0f0f5;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .pc-btn {
+      width: 100%; padding: 10px 14px; border-radius: 10px; border: none;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all .15s; font-family: inherit; letter-spacing: .01em;
+    }
+    .pc-btn-primary {
+      background: linear-gradient(135deg, #1a237e, #3a64d1); color: #fff;
+    }
+    .pc-btn-primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #0e1560, #2a54c1);
+      box-shadow: 0 4px 16px rgba(58,100,209,.35);
+    }
+    .pc-btn-primary:disabled {
+      background: #c5cde8; cursor: not-allowed; opacity: .7;
+    }
+    .pc-btn-deposit {
+      background: #fff; color: #28a745; border: 1.5px solid #28a745;
+    }
+    .pc-btn-deposit:hover {
+      background: #28a745; color: #fff;
+      box-shadow: 0 4px 14px rgba(40,167,69,.3);
+    }
+
+    /* MODAL OVERLAY */
+    #subscribe-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      backdrop-filter: blur(2px);
+    }
+    .modal-box {
+      background: #fff;
+      border-radius: 18px;
+      width: 100%;
+      max-width: 430px;
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.22);
+      animation: modalIn .2s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(20px) scale(.97); }
+      to   { opacity: 1; transform: translateY(0)   scale(1);    }
+    }
+    .modal-header {
+      background: linear-gradient(135deg, #1a237e, #3a64d1);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-header-text .modal-label {
+      color: rgba(255,255,255,.7);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 3px;
+    }
+    .modal-header-text .modal-plan-name {
+      color: #fff;
+      font-size: 19px;
+      font-weight: 700;
+    }
+    .modal-close-btn {
+      background: rgba(255,255,255,.18);
+      border: none;
+      color: #fff;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 17px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s;
+      flex-shrink: 0;
+    }
+    .modal-close-btn:hover { background: rgba(255,255,255,.3); }
+    .modal-body { padding: 1.5rem; }
+    .modal-range-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 1.25rem;
+    }
+    .modal-range-pill {
+      flex: 1;
+      background: #f0f4ff;
+      border-radius: 10px;
+      padding: 10px 14px;
+      text-align: center;
+    }
+    .modal-range-pill .pill-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #999;
+      margin-bottom: 3px;
+    }
+    .modal-range-pill .pill-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a237e;
+    }
+    .modal-field-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #444;
+      margin-bottom: 8px;
+    }
+    .modal-input-wrap {
+      position: relative;
+      margin-bottom: 6px;
+    }
+    .modal-input-prefix {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #888;
+      font-size: 16px;
+      font-weight: 600;
+      pointer-events: none;
+    }
+    .modal-amount-input {
+      width: 100%;
+      padding: 12px 14px 12px 30px;
+      border: 1.5px solid #dde3f5;
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: 600;
+      color: #1a1a2e;
+      outline: none;
+      box-sizing: border-box;
+      font-family: inherit;
+      transition: border-color .15s;
+    }
+    .modal-amount-input:focus { border-color: #3a64d1; }
+    .modal-hint {
+      font-size: 11px;
+      color: #aaa;
+      margin-bottom: 4px;
+    }
+    .modal-error {
+      color: #dc3545;
+      font-size: 12px;
+      font-weight: 500;
+      min-height: 18px;
+      margin-bottom: 1.1rem;
+    }
+    .modal-btn-row {
+      display: flex;
+      gap: 10px;
+    }
+    .modal-btn-cancel {
+      flex: 1;
+      padding: 11px;
+      border-radius: 10px;
+      border: 1.5px solid #dde3f5;
+      background: #fff;
+      color: #666;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all .15s;
+    }
+    .modal-btn-cancel:hover { background: #f5f5f5; }
+    .modal-btn-confirm {
+      flex: 2;
+      padding: 11px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #1a237e, #3a64d1);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all .15s;
+    }
+    .modal-btn-confirm:hover:not(:disabled) {
+      background: linear-gradient(135deg, #0e1560, #2a54c1);
+      box-shadow: 0 4px 16px rgba(58,100,209,.35);
+    }
+    .modal-btn-confirm:disabled {
+      opacity: .7;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+
+<div class="plans-section">
+
+  <!-- HEADER -->
+  <div class="plans-header">
+    <div class="plans-header-left">
+      <div class="plans-header-icon">
+        <i class="fas fa-chart-line"></i>
+      </div>
+      <div>
+        <div class="plans-header-title">Investment Plans</div>
+        <div class="plans-header-sub">Choose a plan and grow your portfolio</div>
+      </div>
+    </div>
+    <div class="plans-balance-badge">
+      <i class="fas fa-wallet"></i>
+      <span id="balance-text">Balance: $0.00</span>
+    </div>
+  </div>
+
+  <!-- PLANS GRID -->
+  <div class="plans-grid" id="plans-list">
+    <div class="plans-spinner">
+      <i class="fas fa-circle-notch"></i>
+      Loading plans…
+    </div>
+  </div>
+
+</div>
+
+<!-- SUBSCRIBE MODAL -->
+<div id="subscribe-modal">
+  <div class="modal-box">
+
+    <div class="modal-header">
+      <div class="modal-header-text">
+        <div class="modal-label">Subscribe to Plan</div>
+        <div class="modal-plan-name" id="modal-plan-name"></div>
+      </div>
+      <button class="modal-close-btn" onclick="closeSubscribeModal()">
+        <i class="fas fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="modal-range-row">
+        <div class="modal-range-pill">
+          <div class="pill-label">Min Deposit</div>
+          <div class="pill-value" id="modal-min"></div>
+        </div>
+        <div class="modal-range-pill">
+          <div class="pill-label">Max Deposit</div>
+          <div class="pill-value" id="modal-max"></div>
+        </div>
+      </div>
+
+      <label class="modal-field-label" for="modal-amount-input">Enter Amount (USD)</label>
+      <div class="modal-input-wrap">
+        <span class="modal-input-prefix">$</span>
+        <input
+          type="number"
+          id="modal-amount-input"
+          class="modal-amount-input"
+          placeholder="0.00"
+          step="0.01"
+          oninput="document.getElementById('modal-error').textContent=''"
+        />
+      </div>
+      <div class="modal-hint" id="modal-hint"></div>
+      <div class="modal-error" id="modal-error"></div>
+
+      <input type="hidden" id="modal-plan-id" />
+
+      <div class="modal-btn-row">
+        <button class="modal-btn-cancel" onclick="closeSubscribeModal()">Cancel</button>
+        <button class="modal-btn-confirm" id="modal-confirm-btn" onclick="confirmSubscription()">
+          <i class="fas fa-wallet"></i>
+          Confirm Subscription
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_BASE = 'https://scottlsh-render.onrender.com';
+  let PLANS = [];
+
+  const PLAN_ICONS = [
+    'fa-seedling','fa-rocket','fa-crown','fa-gem',
+    'fa-star','fa-bolt','fa-fire','fa-trophy','fa-infinity'
+  ];
+
+  function getCurrentUser() {
+    try { return JSON.parse(localStorage.getItem('user')) || null; }
+    catch { return null; }
+  }
+
+  async function renderPlans() {
+    document.getElementById('plans-list').innerHTML =
+      '<div class="plans-spinner"><i class="fas fa-circle-notch"></i>Loading plans…</div>';
+
+    const token = localStorage.getItem('token') || sessionStorage.getItem('admin_token') || '';
+
+    try {
+      const res = await fetch(API_BASE + '/admin/plans', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      if (!res.ok) throw new Error('Server returned ' + res.status);
+
+      const data = await res.json();
+      console.log('Plans response:', data);
+
+      PLANS = Array.isArray(data) ? data : (data.plans || data.data || []);
+      PLANS = PLANS.map(p => ({ ...p, id: p.id || p._id }));
+
+      console.log('Plans parsed:', PLANS);
+      renderPlansList();
+
+    } catch (e) {
+      console.error('Failed to load plans:', e);
+      document.getElementById('plans-list').innerHTML =
+        `<div class="plans-error">
+          <i class="fas fa-circle-exclamation"></i>
+          Failed to load plans: ${e.message}
+        </div>`;
+    }
+  }
+
+  function renderPlansList() {
+    const el          = document.getElementById('plans-list');
+    const user        = getCurrentUser();
+    const userBalance = parseFloat(user?.balance || 0);
+
+    document.getElementById('balance-text').textContent =
+      'Balance: $' + userBalance.toLocaleString(undefined, { minimumFractionDigits: 2 });
+
+    if (!PLANS.length) {
+      el.innerHTML =
+        `<div class="plans-empty">
+          <i class="fas fa-folder-open"></i>
+          No investment plans available yet.
+        </div>`;
+      return;
+    }
+
+    el.innerHTML = PLANS.map((p, i) => {
+      const minAmount = Number(p.min || p.minDeposit || 0);
+      const maxAmount = Number(p.max || p.maxDeposit || 0);
+      const canAfford = userBalance >= minAmount;
+      const icon      = PLAN_ICONS[i % PLAN_ICONS.length];
+      const balFmt    = userBalance.toLocaleString(undefined, { minimumFractionDigits: 2 });
+      const shortfall = (minAmount - userBalance).toLocaleString(undefined, { minimumFractionDigits: 2 });
+
+      return `
+      <div class="plan-card">
+
+        <div class="pc-header">
+          <div class="pc-header-top">
+            <div class="pc-icon"><i class="fas ${icon}"></i></div>
+            <span class="pc-status ${p.status === 'active' ? 'active' : 'inactive'}">
+              <i class="fas ${p.status === 'active' ? 'fa-circle-check' : 'fa-circle-xmark'}" style="font-size:8px"></i>
+              ${p.status}
+            </span>
+          </div>
+          <div class="pc-name">${p.name}</div>
+          ${p.desc || p.description ? `<div class="pc-desc">${p.desc || p.description}</div>` : ''}
+          <div class="pc-roi">
+            <i class="fas fa-arrow-trend-up"></i>
+            <span class="roi-val">${p.roi}%</span> ROI
+          </div>
+        </div>
+
+        <div class="pc-body">
+          <div class="pc-stats">
+            <div class="pc-stat">
+              <div class="pc-stat-icon ic-blue"><i class="fas fa-arrow-down-to-line"></i></div>
+              <div>
+                <div class="pc-stat-label">Min Deposit</div>
+                <div class="pc-stat-value">$${minAmount.toLocaleString()}</div>
+              </div>
+            </div>
+            <div class="pc-stat">
+              <div class="pc-stat-icon ic-green"><i class="fas fa-arrow-up-from-line"></i></div>
+              <div>
+                <div class="pc-stat-label">Max Deposit</div>
+                <div class="pc-stat-value">$${maxAmount.toLocaleString()}</div>
+              </div>
+            </div>
+            <div class="pc-stat">
+              <div class="pc-stat-icon ic-orange"><i class="fas fa-calendar-days"></i></div>
+              <div>
+                <div class="pc-stat-label">Duration</div>
+                <div class="pc-stat-value">${p.duration} days</div>
+              </div>
+            </div>
+            <div class="pc-stat">
+              <div class="pc-stat-icon ic-purple"><i class="fas fa-money-bill-transfer"></i></div>
+              <div>
+                <div class="pc-stat-label">Payout</div>
+                <div class="pc-stat-value">${p.payout || p.payoutFrequency || '—'}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pc-balance ${canAfford ? 'ok' : 'low'}">
+            <div class="pc-bal-left">
+              <i class="fas ${canAfford ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i>
+              Your balance:&nbsp;<span class="pc-bal-val">$${balFmt}</span>
+            </div>
+            <div class="pc-bal-right">
+              ${canAfford
+                ? '<i class="fas fa-check" style="margin-right:3px"></i>Sufficient'
+                : `<i class="fas fa-minus" style="margin-right:3px"></i>$${shortfall} short`}
+            </div>
+          </div>
+        </div>
+
+        <div class="pc-footer">
+          <button
+            class="pc-btn pc-btn-primary"
+            onclick="${canAfford ? `openSubscribeModal('${p.id}')` : 'void(0)'}"
+            ${!canAfford ? 'disabled' : ''}
+            title="${canAfford ? 'Subscribe using your wallet balance' : 'Insufficient balance — deposit first'}"
+          >
+            <i class="fas fa-wallet"></i>
+            Subscribe from Balance
+          </button>
+          ${!canAfford ? `
+          <button class="pc-btn pc-btn-deposit" onclick="goToDeposit('${p.id}','${p.name}',${minAmount})">
+            <i class="fas fa-plus-circle"></i>
+            Deposit to Subscribe
+          </button>` : ''}
+        </div>
+
+      </div>`;
+    }).join('');
+  }
+
+  /* ── MODAL ── */
+
+  function openSubscribeModal(planId) {
+    const plan = PLANS.find(p => p.id === planId);
+    if (!plan) return;
+
+    const minAmount = Number(plan.min || plan.minDeposit || 0);
+    const maxAmount = Number(plan.max || plan.maxDeposit || 0);
+    const user      = getCurrentUser();
+    const userBal   = parseFloat(user?.balance || 0);
+
+    document.getElementById('modal-plan-name').textContent = plan.name;
+    document.getElementById('modal-min').textContent = '$' + minAmount.toLocaleString();
+    document.getElementById('modal-max').textContent = '$' + maxAmount.toLocaleString();
+    document.getElementById('modal-hint').textContent =
+      'Your balance: $' + userBal.toLocaleString(undefined, { minimumFractionDigits: 2 });
+
+    const input = document.getElementById('modal-amount-input');
+    input.min   = minAmount;
+    input.max   = maxAmount;
+    input.value = minAmount;
+
+    document.getElementById('modal-plan-id').value  = planId;
+    document.getElementById('modal-error').textContent = '';
+
+    const confirmBtn = document.getElementById('modal-confirm-btn');
+    confirmBtn.disabled = false;
+    confirmBtn.innerHTML = '<i class="fas fa-wallet"></i> Confirm Subscription';
+
+    document.getElementById('subscribe-modal').style.display = 'flex';
+  }
+
+  function closeSubscribeModal() {
+    document.getElementById('subscribe-modal').style.display = 'none';
+  }
+
+  /* Close modal on overlay click */
+  document.getElementById('subscribe-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeSubscribeModal();
+  });
+
+  async function confirmSubscription() {
+    const planId    = document.getElementById('modal-plan-id').value;
+    const plan      = PLANS.find(p => p.id === planId);
+    const planName  = plan ? plan.name : '';
+    const input     = document.getElementById('modal-amount-input');
+    const amount    = parseFloat(input.value);
+    const minAmount = parseFloat(input.min);
+    const maxAmount = parseFloat(input.max);
+    const errorEl   = document.getElementById('modal-error');
+
+    errorEl.textContent = '';
+
+    /* Validate amount */
+    if (isNaN(amount) || String(input.value).trim() === '') {
+      errorEl.textContent = 'Please enter an amount.';
+      return;
+    }
+    if (amount < minAmount) {
+      errorEl.textContent = `Amount must be at least $${minAmount.toLocaleString()}.`;
+      return;
+    }
+    if (amount > maxAmount) {
+      errorEl.textContent = `Amount cannot exceed $${maxAmount.toLocaleString()}.`;
+      return;
+    }
+
+    const user        = getCurrentUser();
+    const userBalance = parseFloat(user?.balance || 0);
+
+    if (userBalance < amount) {
+      errorEl.textContent =
+        `Insufficient balance. Your balance is $${userBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}.`;
+      return;
+    }
+
+    const token   = localStorage.getItem('token') || sessionStorage.getItem('admin_token') || '';
+    const payload = {
+      subname:   planName,
+      subamount: amount,
+      from:      user.email || user._id,
+      to:        user.email || '',
+      timestamp: new Date().toISOString()
+    };
+
+    console.log('Subscribing with payload:', payload);
+
+    const confirmBtn = document.getElementById('modal-confirm-btn');
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Processing…';
+
+    try {
+      const res = await fetch(`${API_BASE}/transactions/${user._id}/plan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      console.log('Subscribe response:', data);
+
+      if (!res.ok) throw new Error(data.message || 'Subscription failed');
+
+      user.balance = userBalance - amount;
+      localStorage.setItem('user', JSON.stringify(user));
+
+      closeSubscribeModal();
+      alert(`✅ Successfully subscribed to ${planName} for $${amount.toLocaleString()}!`);
+      setTimeout(() => { location.href = 'history.html'; }, 2000);
+      renderPlansList();
+
+    } catch (e) {
+      console.error('confirmSubscription error:', e);
+      errorEl.textContent = 'Subscription failed: ' + e.message;
+      confirmBtn.disabled = false;
+      confirmBtn.innerHTML = '<i class="fas fa-wallet"></i> Confirm Subscription';
+    }
+  }
+
+  function goToDeposit(planId, planName, amount) {
+    sessionStorage.setItem('pending_plan', JSON.stringify({ planId, planName, amount }));
+    window.location.href = '/user/deposit';
+  }
+
+  window.onload = async function () {
+    const user = getCurrentUser();
+    console.log('User from localStorage:', user);
+    await renderPlans();
+  };
+</script>
+
+</body>
+</html>

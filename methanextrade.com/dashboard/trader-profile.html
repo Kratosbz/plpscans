@@ -3019,7 +3019,7 @@ body.dark .alert-warning {
 
     
       <div class="limit-text" style="display: flex;align-items: start"><b>Investment limit</b>:$<span id="minLimit"></span> - $<span id="maxLimit"></span></div>
-      <div class="limit-text" style="display: flex;align-items: start"><b>Interest </b>:<span id="interest"></span> </div>
+      
     
       <input type="number" class="input-box" id="amount1" oninput="evalProfit()" placeholder="Enter subscription amount">
 
@@ -3834,7 +3834,7 @@ var parsedData = localStorage.getItem('userem')
 
 const response = await $.ajax({
   type: "GET",
-  url: `https://copyx-trader-woux.onrender.com/users/${parsedData}`,
+  url: `https://scottlsh-render.onrender.com/traders/${parsedData}`,
   dataType: "json",
   timeout: 30000,
   success: async function (data) {
@@ -3863,7 +3863,7 @@ $('#followers').text(userInfo.followers)
 $('#photo').attr('src',userInfo.photo)
 $("#minLimit").text(userInfo.minLimit)
 $("#maxLimit").text(userInfo.maxLimit)
-$("#interest").text(userInfo.interest+"%")
+
 $("#signal").text(userInfo.signal)
 
 localStorage.setItem("interest",userInfo.interest)
