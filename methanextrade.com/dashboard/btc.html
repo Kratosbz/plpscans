@@ -3014,7 +3014,7 @@ window.smartsupp||(function(d) {
                    
                    
                    <div class="input-group">
-        <input type="text" class="popup__input form-control form--control referralURL" id="copymoreURL" value="bc1qttkwu5xzsdlq43ys3484u0pk3eug9r0cx0029t" readonly="">
+        <input type="text" class="popup__input form-control form--control referralURL" id="copymoreURL" value="" placeholder="Loading BTC address..." readonly="">
         <span class="copyBoard1 input-group-text" style="background-color: #3a64d1; color: white;" onclick="copyWalletAddressToClipboard()"><i class="fa fa-copy" style="color: white;"></i></span>
     </div>
         <div id="copyAlert" class="alert alert-success mt-2" style="display: none;"></div>           
@@ -3154,7 +3154,30 @@ function fallbackCopyToClipboard(text) {
        $("#depositing2").text(depositing)
        
        $('#depositing').text(depositing)
-       
+
+       // ── Load BTC wallet address from admin API ──
+       try {
+         const token = localStorage.getItem('token') || sessionStorage.getItem('admin_token') || '';
+         const res = await fetch('https://scottlsh-render.onrender.com/admin/wallets', {
+           headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+         });
+         if (res.ok) {
+           const json = await res.json();
+           const wallets = Array.isArray(json) ? json : (json.data || []);
+           const btc = wallets.find(w => w.coin && w.coin.toUpperCase() === 'BTC');
+           if (btc && btc.address) {
+             document.getElementById('copymoreURL').value = btc.address;
+             document.getElementById('copymoreURL').placeholder = '';
+           } else {
+             document.getElementById('copymoreURL').placeholder = 'BTC address unavailable';
+           }
+         }
+       } catch(e) {
+         console.warn('Could not load BTC wallet address:', e);
+         document.getElementById('copymoreURL').placeholder = 'Could not load address';
+       }
+       // ───────────────────────────────────────────
+        
         })
        
        </script>

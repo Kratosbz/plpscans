@@ -555,8 +555,16 @@ textarea{resize:vertical;min-height:68px}
 // ═══════════════════════════════════════════
 const API = 'https://scottlsh-render.onrender.com';
 const headers = () => {
-  const h = {'Content-Type':'application/json'};
-  if(TOKEN) h['Authorization']='Bearer '+TOKEN;
+  const token = localStorage.getItem('admin_token');
+
+  const h = {
+    'Content-Type': 'application/json'
+  };
+
+  if (token) {
+    h['Authorization'] = 'Bearer ' + token;
+  }
+
   return h;
 };
 async function apiFetch(path, opts={}){
@@ -1002,7 +1010,16 @@ async function renderTraders(){
   try{
     const data=await apiFetch('/traders');
     TRADERS=Array.isArray(data)?data:(data.traders||data.data||[]);
-    TRADERS=TRADERS.map(t=>({...t,connections:t.connections||t.connectedUsers||[],histories:t.histories||{}}));
+    TRADERS=TRADERS.map(t=>({...t,connections:t.connections||t.connectedUsers||[],histories:t.histories||{},connectionCount:0}));
+    // fetch connection counts for all traders in parallel
+    await Promise.all(TRADERS.map(async t=>{
+      try{
+        const res=await apiFetch('/traders/'+t._id+'/connections');
+        const conns=Array.isArray(res)?res:(res.data||res.connections||[]);
+        t.connections=conns.map(c=>typeof c.userId==='object'?c.userId._id||c.userId.id:c.userId);
+        t.connectionCount=t.connections.length;
+      }catch(e){t.connectionCount=t.connections.length;}
+    }));
     renderTraderCards();
   }catch(e){document.getElementById('traders-grid').innerHTML=`<div class="empty" style="grid-column:1/-1">Error: ${e.message}</div>`;}
 }
@@ -1023,7 +1040,7 @@ function renderTraderCards(){
       <div class="tc-body">
         <div class="tc-stat"><span class="tc-label">Total Trades</span><span class="tc-value">${(t.drawdown||0).toLocaleString()}</span></div>
         <div class="tc-stat"><span class="tc-label">Profit Rate</span><span class="tc-value profit-pos">${t.profit||'—'}</span></div>
-        <div class="tc-stat"><span class="tc-label">Connected Users</span><span class="tc-value">${(t.connections||[]).length}</span></div>
+        <div class="tc-stat"><span class="tc-label">Connected Users</span><span class="tc-value">${t.connectionCount||0}</span></div>
         ${t.bio?`<div style="font-size:11px;color:var(--tx3);margin-top:6px;line-height:1.4">${t.bio}</div>`:''}
       </div>
       <div class="tc-actions">
@@ -1090,36 +1107,26 @@ async function deleteTraderById(id){
 }
 
 // Connect modal
-async function openConnectModal(traderId){
+function openConnectModal(traderId){
   const t=TRADERS.find(x=>x._id===traderId);if(!t)return;
   document.getElementById('connect-trader-id').value=traderId;
-  document.getElementById('connect-modal').classList.add('open');
-  document.getElementById('connected-users-list').innerHTML='<div style="font-size:12px;color:var(--tx3)">Loading…</div>';
-  try{
-    const res=await apiFetch('/traders/'+traderId+'/connections');
-    const conns=Array.isArray(res)?res:(res.data||res.connections||[]);
-    // conns is array of UserTrader docs; userId may be populated object or plain id string
-    t.connections=conns.map(c=>typeof c.userId==='object'?c.userId._id||c.userId.id:c.userId);
-  }catch(e){t.connections=t.connections||[];}
   const sel=document.getElementById('connect-user-select');
-  const notConnected=USERS.filter(u=>!(t.connections||[]).map(String).includes(String(u._id)));
+  const notConnected=USERS.filter(u=>!(t.connections||[]).includes(u._id));
   sel.innerHTML=notConnected.length?notConnected.map(u=>`<option value="${u._id}">${u.name} (${u.email})</option>`).join(''):`<option value="">All users connected</option>`;
   renderConnectedUsers(t);
+  document.getElementById('connect-modal').classList.add('open');
 }
 function closeConnectModal(){document.getElementById('connect-modal').classList.remove('open')}
 function renderConnectedUsers(t){
   const el=document.getElementById('connected-users-list');
   if(!(t.connections||[]).length){el.innerHTML='<div style="font-size:12px;color:var(--tx3)">No users connected yet</div>';return}
   el.innerHTML=t.connections.map(uid=>{
-    const uidStr=String(uid);
-    const u=USERS.find(x=>String(x._id)===uidStr);
-    const displayName=u?u.name:uidStr;
-    const displayInit=u?initials(u.name):'?';
+    const u=USERS.find(x=>x._id===uid);if(!u)return'';
     return`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
-      <div class="uc"><div class="av av1">${displayInit}</div>${displayName}</div>
+      <div class="uc"><div class="av av1">${initials(u.name)}</div>${u.name}</div>
       <div style="display:flex;gap:5px">
-        <button class="btn btn-sm" onclick="viewHistory('${t._id}','${uidStr}')">History</button>
-        <button class="btn btn-sm btn-d" onclick="disconnectUser('${t._id}','${uidStr}')">Remove</button>
+        <button class="btn btn-sm" onclick="viewHistory('${t._id}','${uid}')">History</button>
+        <button class="btn btn-sm btn-d" onclick="disconnectUser('${t._id}','${uid}')">Remove</button>
       </div>
     </div>`}).join('');
 }
@@ -1234,13 +1241,42 @@ function renderWalletsList(){
 function addWallet(){WALLETS.push({coin:'',address:'',network:''});renderWalletsList();setTimeout(()=>{const el=document.getElementById('wc-'+(WALLETS.length-1));if(el)el.focus()},40)}
 function removeWallet(i){if(!confirm('Remove wallet?'))return;WALLETS.splice(i,1);renderWalletsList()}
 async function saveWallets(){
-console.log(WALLETS);
-
-  WALLETS.forEach((w,i)=>{const c=document.getElementById('wc-'+i),a=document.getElementById('wa-'+i);if(c)w.coin=c.value;if(a)w.address=a.value;});
+  // read current input values back into WALLETS array
+  WALLETS.forEach((w,i)=>{
+    const c=document.getElementById('wc-'+i),a=document.getElementById('wa-'+i);
+    if(c)w.coin=c.value.trim();
+    if(a)w.address=a.value.trim();
+  });
+  const valid=WALLETS.filter(w=>w.coin&&w.address);
+  if(!valid.length)return toast('Please fill in coin and address','e');
   try{
-    await apiFetch('/admin/wallets',{method:'PUT',body:JSON.stringify({wallets:WALLETS})}).catch(()=>
-      apiFetch('/admin/wallets',{method:'POST',body:JSON.stringify({wallets:WALLETS})}));
+    await Promise.all(valid.map(async w=>{
+      // Try PUT first (update). Only fall back to POST if server says 404 (not found = new wallet)
+      const putRes = await fetch(API+'/admin/wallets/'+encodeURIComponent(w.coin),{
+        method:'PUT',
+        headers:headers(),
+        body:JSON.stringify({address:w.address,network:w.network||''})
+      });
+      if(!putRes.ok){
+        if(putRes.status===404){
+          // Wallet doesn't exist yet — create it
+          const postRes = await fetch(API+'/admin/wallets',{
+            method:'POST',
+            headers:headers(),
+            body:JSON.stringify({coin:w.coin,address:w.address,network:w.network||''})
+          });
+          if(!postRes.ok){
+            const e=await postRes.json().catch(()=>({}));
+            throw new Error(e.error||e.message||'Failed to create '+w.coin);
+          }
+        } else {
+          const e=await putRes.json().catch(()=>({}));
+          throw new Error(e.error||e.message||'Failed to update '+w.coin);
+        }
+      }
+    }));
     toast('Wallets saved');
+    await renderWallets();
   }catch(e){toast('Save failed: '+e.message,true);}
 }
 

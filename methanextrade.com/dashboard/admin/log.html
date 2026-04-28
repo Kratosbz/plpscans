@@ -802,9 +802,9 @@ function onLoginSuccess(token, data) {
 
   // Store token in sessionStorage (clears on tab close; not persistent like localStorage)
   // This matches the security posture of the backend (tokens can be blocklisted)
-  sessionStorage.setItem('admin_token', token);
-  sessionStorage.setItem('admin_role',  payload.role || 'admin');
-  sessionStorage.setItem('admin_id',    payload.id   || '');
+  localStorage.setItem('admin_token', token);
+localStorage.setItem('admin_role',  payload.role || 'admin');
+localStorage.setItem('admin_id',    payload.id   || '');
 
   // Show success UI
   document.getElementById('card-body').style.display = 'none';
@@ -848,7 +848,7 @@ document.addEventListener('keydown', e => {
 //  If a valid token is still in sessionStorage, skip the form
 // ─────────────────────────────────────────────────────────────
 (function checkExistingSession() {
-  const stored = sessionStorage.getItem('admin_token');
+  const stored = localStorage.getItem('admin_token');
   if (!stored) return;
 
   // Decode and check expiry client-side
