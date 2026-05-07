@@ -1038,7 +1038,15 @@ document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
                localStorage.setItem("firstName",firstName)
                
                console.log(email,password,firstName,lastName,country,referralCode);
-               registerUser({ email, password, firstName, lastName, country,referralCode });
+              registerUser({
+    email,
+    password,
+    firstName,
+    lastName,
+    country,
+    referralCode,
+    phone
+});
            });
 
          topFunction();

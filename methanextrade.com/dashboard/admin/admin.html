@@ -579,7 +579,12 @@ async function apiFetch(path, opts={}){
 // ── In-memory state (populated from API) ──
 let USERS=[], KYC=[], DEPOSITS=[], WITHDRAWALS=[], TRADERS=[], WALLETS=[], PLANS=[];
 let TOKEN = localStorage.getItem('admin_token')||null;
-let editUid=null,editPlanId=null,kycFilter='all',depFilter='all',wdFilter='all';
+let editUid = null,
+    editEmail = null,
+    editPlanId = null,
+    kycFilter = 'all',
+    depFilter = 'all',
+    wdFilter = 'all';
 let activeTrader=null,activeUserId=null,editingTrader=null;
 const AVS=['av1','av2','av3','av4'];
 function av(i){return AVS[i%AVS.length]}
@@ -664,18 +669,33 @@ function filterUsers(){
   </tr>`).join(''):`<tr><td colspan="7" class="empty">No users found</td></tr>`;
 }
 function openEdit(id){
-  const u=USERS.find(x=>x._id===id);if(!u)return;editUid=id;
-  const pts=(u.name||'').split(' ');
-  document.getElementById('ef-fname').value=u.firstName||pts[0]||'';
-  document.getElementById('ef-lname').value=u.lastName||pts.slice(1).join(' ')||'';
-  document.getElementById('ef-email').value=u.email||'';
-  document.getElementById('ef-phone').value=u.phone||'';
-  document.getElementById('ef-country').value=u.country||'';
-  document.getElementById('ef-status').value=u.status||'active';
-  document.getElementById('ef-balance').value=u.balance||0;
-  document.getElementById('ef-profit').value=u.profit||0;
-  document.getElementById('ef-id').value=id;
-  const p=document.getElementById('edit-user-panel');p.style.display='block';p.scrollIntoView({behavior:'smooth'});
+
+  const u = USERS.find(x => x._id === id);
+
+  if(!u) return;
+
+  editUid = id;
+  editEmail = u.email;
+
+  const pts = (u.name || '').split(' ');
+
+  document.getElementById('ef-fname').value = u.firstName || pts[0] || '';
+  document.getElementById('ef-lname').value = u.lastName || pts.slice(1).join(' ') || '';
+  document.getElementById('ef-email').value = u.email || '';
+  document.getElementById('ef-phone').value = u.phone || '';
+  document.getElementById('ef-country').value = u.country || '';
+  document.getElementById('ef-status').value = u.status || 'active';
+  document.getElementById('ef-balance').value = u.balance || 0;
+  document.getElementById('ef-profit').value = u.profit || 0;
+  document.getElementById('ef-id').value = id;
+
+  const p = document.getElementById('edit-user-panel');
+
+  p.style.display = 'block';
+
+  p.scrollIntoView({
+    behavior:'smooth'
+  });
 }
 function closeEdit(){document.getElementById('edit-user-panel').style.display='none';editUid=null}
 async function saveUser(){
@@ -685,20 +705,35 @@ async function saveUser(){
   if(!fn||!em){toast('Name and email required',true);return}
   const payload={firstName:fn,lastName:ln,name:(fn+' '+ln).trim(),email:em,phone:document.getElementById('ef-phone').value,country:document.getElementById('ef-country').value,status:document.getElementById('ef-status').value,balance:parseFloat(document.getElementById('ef-balance').value)||0,profit:parseFloat(document.getElementById('ef-profit').value)||0};
   try{
-    await apiFetch('/users/'+editUid,{method:'PUT',body:JSON.stringify(payload)});
+    await apiFetch('/users/'+editUid+'/profile/update',{method:'PUT',body:JSON.stringify(payload)});
     const u=USERS.find(x=>x._id===editUid);if(u)Object.assign(u,payload);
     toast('User updated');closeEdit();filterUsers();
   }catch(e){toast('Save failed: '+e.message,true);}
 }
 async function deleteUser(){
-  if(!confirm('Delete user permanently?'))return;
-  try{
-    await apiFetch('/users/'+editUid,{method:'DELETE'});
-    USERS=USERS.filter(x=>x._id!==editUid);
-    toast('User deleted');closeEdit();filterUsers();
-  }catch(e){toast('Delete failed: '+e.message,true);}
-}
 
+  if(!confirm('Delete user permanently?')) return;
+
+  try{
+
+    await apiFetch('/users/' + encodeURIComponent(editEmail)+'/delete', {
+      method:'DELETE'
+    });
+
+    USERS = USERS.filter(x => x.email !== editEmail);
+
+    toast('User deleted');
+
+    closeEdit();
+
+    filterUsers();
+
+  }catch(e){
+
+    toast('Delete failed: ' + e.message, true);
+
+  }
+}
 // ══ KYC ══
 async function renderKYC(){
   document.getElementById('kyc-table').innerHTML='<tr><td colspan="6" class="empty">Loading…</td></tr>';

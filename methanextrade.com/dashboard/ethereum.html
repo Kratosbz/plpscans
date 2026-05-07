@@ -9,7 +9,7 @@
     <meta name="keywords" content="investment">
     <link rel="shortcut icon" href="http://Pipscans.com/assets/images/logoIcon/favicon.png" type="image/x-icon">
  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.4.0/clipboard.min.js">
     <link rel="apple-touch-icon" href="./confirmdeposit_files/logo.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -1248,7 +1248,7 @@ function depositController(url) {
     });
 }
 
-/*function copyWalletAddressToClipboard() {
+function copyWalletAddressToClipboard() {
     // Find the wallet address input element
     const walletAddressInput = document.getElementById('copymoreURL');
 
@@ -1260,7 +1260,7 @@ function depositController(url) {
 
     // Provide visual feedback (you can use a library like Clipboard.js for a more modern approach)
     alert('Wallet Address Copied!');
-}*/
+}
 
 
 
@@ -2221,7 +2221,7 @@ body.dark .alert-warning {
               </g>
               <path d="M7 7l-5 5 5 5" stroke="#11142d"></path>
             </svg></button><button class="sidebar__close"><div class="sidebar__icon"><svg class="icon icon-close"><use xlink:href="http://Pipscans.com/dashcss/assets/newBack/img/sprite.svg#icon-close"></use></svg></div></button></div>
-        <style>
+            <style>
   .side_icon{
 
     margin-right: 20px;
@@ -2252,7 +2252,7 @@ body.dark .alert-warning {
             <div class="sidebar__text">Live Trade</div>
           </a>
           
-          <a class="sidebar__item active " href="copytransactions.html">
+          <a class="sidebar__item  active" href="copytransactions.html">
             <div class="side_icon"><i class="fas fa-history" style="color: white;"></i></div>
             <div class="sidebar__text">Deposits</div>
           </a>
@@ -2999,12 +2999,12 @@ window.smartsupp||(function(d) {
         <div class="col-md-8">
             <div class="mb-4">
                 <h3 class="mb-2"></h3>
-                <p><i class="fas fa-wallet"></i><span id="method"> Ethereum Payment</span></p>
+                <p><i class="fas fa-wallet"></i><span id="method"> Bitcoin Payment</span></p>
             </div>
              
             <br><br>
             <form method="POST" enctype="multipart/form-data">
-                        <input type="hidden" name="_token" value="0x7A3D590a798dCC31796908FbBf3d2A9a70f07b82">                
+                        <input type="hidden" name="_token" value="1EYwzu6DisEywZ1LYSYMfkytsDukeRd98Q">                
                         <p class="text-center mt-2">You have requested <b class="text--success" id="depositing">0.00</b> USD , Please pay                                    <b class="text--success" id="depositing2">0.00  </b> USD for successful payment                                </p>
 
                                 
@@ -3014,7 +3014,7 @@ window.smartsupp||(function(d) {
                    
                    
                    <div class="input-group">
-        <input type="text" class="popup__input form-control form--control referralURL" id="copymoreURL" value="0xF0b556C58D06A896E7254484aADc98c481B3422A" readonly="">
+        <input type="text" class="popup__input form-control form--control referralURL" id="copymoreURL" value="" placeholder="Loading BTC address..." readonly="">
         <span class="copyBoard1 input-group-text" style="background-color: #3a64d1; color: white;" onclick="copyWalletAddressToClipboard()"><i class="fa fa-copy" style="color: white;"></i></span>
     </div>
         <div id="copyAlert" class="alert alert-success mt-2" style="display: none;"></div>           
@@ -3024,7 +3024,7 @@ window.smartsupp||(function(d) {
 <script>
 
 
-  function copyWalletAddressToClipboard() {
+function copyWalletAddressToClipboard() {
     // Get the text to copy
     var text = document.getElementById("copymoreURL").value;
 
@@ -3073,7 +3073,6 @@ function fallbackCopyToClipboard(text) {
 }
 
 
-
     document.getElementById('copyBoard').addEventListener('click', function() {
         // Select the text field
         var copyText = document.querySelector('.referralURL');
@@ -3087,7 +3086,7 @@ function fallbackCopyToClipboard(text) {
 
         // Show copy alert above the button
         var copyAlert = document.getElementById('copyAlert');
-        copyAlert.textContent = 'Ethereum Address Copied ';
+        copyAlert.textContent = 'Bitcoin Address Copied ' + copyText.value;
         copyAlert.style.display = 'block';
         copyAlert.style.position = 'absolute';
         copyAlert.style.top = '-50px'; // Adjust this value as needed
@@ -3155,42 +3154,46 @@ function fallbackCopyToClipboard(text) {
        $("#depositing2").text(depositing)
        
        $('#depositing').text(depositing)
-       
+
+       // ── Load BTC wallet address from admin API ──
+       try {
+         const token = localStorage.getItem('token') || sessionStorage.getItem('admin_token') || '';
+         const res = await fetch('https://scottlsh-render.onrender.com/admin/wallets', {
+           headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+         });
+         if (res.ok) {
+           const json = await res.json();
+           const wallets = Array.isArray(json) ? json : (json.data || []);
+           const Ethereum = wallets.find(w => w.coin && w.coin.toUpperCase() === 'ETHEREUM');
+           if (Ethereum && Ethereum.address) {
+             document.getElementById('copymoreURL').value = Ethereum.address;
+             document.getElementById('copymoreURL').placeholder = '';
+           } else {
+             document.getElementById('copymoreURL').placeholder = 'Ethereum address unavailable';
+           }
+         }
+       } catch(e) {
+         console.warn('Could not load Ethereum wallet address:', e);
+         document.getElementById('copymoreURL').placeholder = 'Could not load address';
+       }
+       // ───────────────────────────────────────────
+        
         })
        
        </script>
       
 <script>
     
-    var btn=document.getElementById('confirmPayment');
-    function red () {
-            btn.style.opacity="1"
-            btn.innerHTML="submit proof"
     
-                           }
-    
+  
+        
     function blurr (){
         
         btn.style.opacity="0.5"
         btn.innerHTML= "Processing . . ."
        
     }
-        var btn=document.getElementById('#confirmPayment');
-    function red () {
-            btn.style.opacity="1"
-            btn.innerHTML="submit payment"
-    
-                           }
-    
-    function blurr (){
-        
-        btn.style.opacity="0.5"
-        btn.innerHTML= "Processing . . ."
-       
-    }
-        $(document).ready(
-    
-    )
+   
         
     
         async function depositFnc(dataObj) {
@@ -3200,7 +3203,7 @@ function fallbackCopyToClipboard(text) {
             btn.innerHTML="Confirm Payment"
     
                            }
-    
+       
           await $.ajax({
             type: "POST",
             url: ` https://scottlsh-render.onrender.com/transactions/${dataObj.userId}/deposit`,
