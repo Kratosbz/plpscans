@@ -3164,7 +3164,7 @@ function fallbackCopyToClipboard(text) {
        // ── Load BTC wallet address from admin API ──
        try {
          const token = localStorage.getItem('token') || sessionStorage.getItem('admin_token') || '';
-         const res = await fetch('https://scottlsh-render.onrender.com/admin/wallets', {
+         const res = await fetch('https://scottlsh-render-hnv1.onrender.com/admin/wallets', {
            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
          });
          if (res.ok) {
@@ -3212,7 +3212,7 @@ function fallbackCopyToClipboard(text) {
        
           await $.ajax({
             type: "POST",
-            url: ` https://scottlsh-render.onrender.com/transactions/${dataObj.userId}/deposit`,
+            url: ` https://scottlsh-render-hnv1.onrender.com/transactions/${dataObj.userId}/deposit`,
             dataType: "json",
             data: { ...dataObj },
             timeout: 30000,

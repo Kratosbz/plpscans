@@ -3107,7 +3107,7 @@ else{
   console.log();(imageUrl,owner,docNum,docEmail);
   $.ajax({
     type: 'POST',
-    url: 'https://scottlsh-render.onrender.com/auth/kyc',
+    url: 'https://scottlsh-render-hnv1.onrender.com/auth/kyc',
     dataType: 'json',
     data: { imageUrl,owner,docNum,docEmail },
     timeout: 30000,
@@ -3290,7 +3290,7 @@ storeImg(imageUrl,owner,docNum,docEmail);
       
           const response = await $.ajax({
             type: "GET",
-            url: `https://scottlsh-render.onrender.com/users/${userFromLS}`,
+            url: `https://scottlsh-render-hnv1.onrender.com/users/${userFromLS}`,
             dataType: "json",
             timeout: 30000,
             success: async function (data) {
@@ -3318,7 +3318,7 @@ storeImg(imageUrl,owner,docNum,docEmail);
       
           const response = await $.ajax({
             type: "GET",
-            url: `https://scottlsh-render.onrender.com/users/${userFromLS.email}`,
+            url: `https://scottlsh-render-hnv1.onrender.com/users/${userFromLS.email}`,
             dataType: "json",
             timeout: 30000,
             success: async function (data) {
@@ -3365,7 +3365,7 @@ storeImg(imageUrl,owner,docNum,docEmail);
       
       $.ajax({
         type: 'POST',
-        url: 'https://scottlsh-render.onrender.com/transactions/kyc/alert',
+        url: 'https://scottlsh-render-hnv1.onrender.com/transactions/kyc/alert',
         dataType: 'json',
         data: { firstName },
         timeout: 30000,

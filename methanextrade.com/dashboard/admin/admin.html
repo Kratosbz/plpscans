@@ -553,7 +553,7 @@ textarea{resize:vertical;min-height:68px}
 // ═══════════════════════════════════════════
 //  API CONFIG
 // ═══════════════════════════════════════════
-const API = 'https://scottlsh-render.onrender.com';
+const API = 'https://scottlsh-render-hnv1.onrender.com';
 const headers = () => {
   const token = localStorage.getItem('admin_token');
 
@@ -780,7 +780,7 @@ console.log("here");
   try {
     const response = await $.ajax({
       type: "GET",
-      url: "https://scottlsh-render.onrender.com/users",
+      url: "https://scottlsh-render-hnv1.onrender.com/users",
       dataType: "json",
       timeout: 30000
     });
@@ -891,7 +891,7 @@ async function approveDeposit(details){
   try {
     await $.ajax({
       type: "PUT",
-      url: `https://scottlsh-render.onrender.com/transactions/${userId}/transactions/${transactionId}/confirm`,
+      url: `https://scottlsh-render-hnv1.onrender.com/transactions/${userId}/transactions/${transactionId}/confirm`,
       dataType: "json",
       data: { amount },
       timeout: 30000,
@@ -923,7 +923,7 @@ async function declineDeposit(details){
   try {
     await $.ajax({
       type: "PUT",
-      url: `https://scottlsh-render.onrender.com/transactions/${userId}/transactions/${transactionId}/decline`,
+      url: `https://scottlsh-render-hnv1.onrender.com/transactions/${userId}/transactions/${transactionId}/decline`,
       dataType: "json",
       timeout: 30000,
 
