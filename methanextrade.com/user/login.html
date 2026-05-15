@@ -417,18 +417,17 @@ SignIn
     timeout: 30000,
 
     success: function (res) {
-      console.log("FULL RESPONSE:", res);
-
-      // ✅ CHECK if login actually succeeded
-      if (!res || res.success === false) {
+    console.log("FULL RESPONSE:", JSON.stringify(res));
+    
+    if (!res || res.success === false) {
         Swal.fire({
-          icon: 'error',
-          text: res?.message || 'Incorrect Username or Password!',
-          confirmButtonColor: '#3a64d1',
+            icon: 'error',
+            text: res?.message || 'Incorrect Username or Password!',
+            confirmButtonColor: '#3a64d1',
         });
+        red(); // reset button
         return;
-      }
-
+    }
       const data = res.data;
 
       if (!data) {
